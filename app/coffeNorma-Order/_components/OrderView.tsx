@@ -44,7 +44,7 @@ export default function OrderView({ tableId }: OrderViewProps) {
       {/* Background layer */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="/assets/norma_hd.jpg"
+          src="/assets/Norma.jpeg"
           alt="Cafe Background"
           fill
           className="object-cover scale-105"
