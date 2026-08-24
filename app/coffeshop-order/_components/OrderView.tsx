@@ -44,7 +44,7 @@ export default function OrderView({ tableId }: OrderViewProps) {
       {/* Background layer */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="/assets/Norma.jpeg"
+          src="/assets/Latarbgcoffe_HD.jpg"
           alt="Cafe Background"
           fill
           className="object-cover scale-105"
@@ -61,8 +61,8 @@ export default function OrderView({ tableId }: OrderViewProps) {
         <div className="flex justify-center mb-8 relative">
           <div className="w-28 h-28 relative rounded-full overflow-hidden shadow-xl shadow-[#8c7b70]/10 border-4 border-white bg-white ring-4 ring-[#f4f1eb]">
             <Image
-              src="/assets/LogoNorma.jpg"
-              alt="Caffe Norma Logo"
+              src="/assets/Coffeshoplogo.jpeg"
+              alt="Coffee Shop Logo"
               fill
               className="object-cover"
               sizes="112px"
@@ -72,7 +72,7 @@ export default function OrderView({ tableId }: OrderViewProps) {
         </div>
 
         <div className="text-center mb-10">
-          <h1 className="text-3xl font-bold text-stone-900 tracking-tight mb-2">Norma Coffee</h1>
+          <h1 className="text-3xl font-bold text-stone-900 tracking-tight mb-2">Coffee Shop</h1>
           <p className="text-sm font-medium italic text-stone-600 uppercase tracking-[0.15em]">Pemesanan</p>
         </div>
 

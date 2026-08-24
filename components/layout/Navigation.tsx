@@ -46,11 +46,11 @@ export default function Navigation() {
               <img
                 alt="LogoNorma"
                 className="h-10 w-10 md:h-12 md:w-12 object-cover"
-                src="/assets/LogoNorma.jpg"
+                src="/assets/Coffeshoplogo.jpeg"
               />
             </div>
             <span className="font-bold text-[20px] md:text-[25px] text-primary tracking-tighter leading-none group-hover:text-primary transition-colors mt-1 md:mt-0">
-              <span style={{ color: '#3099ffff' }}>Caffe Norma</span>
+              <span style={{ color: '#3099ffff' }}>Coffee Shop</span>
             </span>
           </div>  
           {/* Desktop Menu */}

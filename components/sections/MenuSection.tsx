@@ -32,7 +32,7 @@ export default function MenuSection() {
               <div className="p-6 md:p-8 flex-grow flex flex-col bg-white">
                 <div className="flex justify-between items-start mb-3">
                   <h3 className="font-headline-md text-xl md:text-[24px] font-bold text-primary leading-tight">
-                    The Norma Matcha Pistachio
+                    The Coffee Shop Matcha Pistachio
                   </h3>
                 </div>
                 <p className="text-sm italic font-light text-on-surface-variant mb-6 flex-grow leading-relaxed" style={{fontWeight: 300}}>

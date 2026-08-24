@@ -192,7 +192,7 @@ export default function OrderMenu({ customerName, tableNumber, seatingArea, onBa
       <div className="px-5 mb-5">
         <p className="text-xs font-semibold text-[#a3948b] uppercase tracking-widest mb-0.5">{greeting} 👋</p>
         <h1 className="text-[22px] font-extrabold text-stone-900 leading-tight">{customerName}</h1>
-        <p className="text-[13px] text-[#b5a89e] mt-0.5">Selamat datang di Caffe Norma</p>
+        <p className="text-[13px] text-[#b5a89e] mt-0.5">Selamat datang di Coffee Shop</p>
         <div className="flex items-center gap-2 mt-3">
           <span className="text-[11px] font-semibold bg-[#f4f1eb] text-[#7a6a60] px-3 py-1.5 rounded-full border border-[#edeae6]">🪑 Meja {tableNumber}</span>
           <span className="text-[11px] font-semibold bg-[#f4f1eb] text-[#7a6a60] px-3 py-1.5 rounded-full border border-[#edeae6]">{seatingArea}</span>
@@ -298,7 +298,7 @@ export default function OrderMenu({ customerName, tableNumber, seatingArea, onBa
             )}
 
             {/* Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {items.map(item => (
                 <div key={item.id} className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[#edeae6] flex flex-col h-full hover:-translate-y-1 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300 group overflow-hidden">
                   <div

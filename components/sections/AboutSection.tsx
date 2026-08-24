@@ -7,12 +7,12 @@ export default function AboutSection() {
       <div className="max-w-container-max mx-auto">
         {/* Heritage Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center mb-24">
-          <div className="order-2 md:order-1 relative group">
-            <div className="absolute -inset-4 bg-primary/20 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+          <div className="order-2 md:order-1 relative group flex justify-center">
+            <div className="absolute -inset-4 bg-primary/20 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700 max-w-sm mx-auto w-full"></div>
             <img
-              className="relative w-full h-auto rounded-xl shadow-2xl border border-outline-variant/20 z-10 brightness-105 saturate-125 contrast-[1.15] hover:scale-[1.02] transition-transform duration-700"
+              className="relative w-4/5 md:max-w-sm h-auto rounded-xl shadow-2xl border border-outline-variant/20 z-10 brightness-105 saturate-125 contrast-[1.15] hover:scale-[1.02] transition-transform duration-700"
               data-alt="A moody, high-end editorial style photograph of a barista's hands carefully pouring perfectly textured latte art into a dark ceramic cup."
-              src="/assets/AboutNorma.jpg"
+              src="/assets/Moments.jpeg"
             />
           </div>
           <div className="order-1 md:order-2 mb-12 md:mb-0">
@@ -21,7 +21,7 @@ export default function AboutSection() {
             </h2>
             <div className="mb-6">
               <FoldText
-                text="Berawal dari kecintaan terhadap seni meracik kopi, Norma menghadirkan pengalaman menikmati kopi yang melampaui tradisi. Kami memilih biji kopi terbaik dari berbagai sumber, kemudian menyangrainya dengan penuh ketelitian untuk menghasilkan cita rasa yang kaya, mendalam, dan berkarakter."
+                text="Kami percaya bahwa kopi bukan sekadar minuman, tetapi sebuah pengalaman yang hadir dalam setiap momen. Berawal dari kecintaan terhadap kopi dan keinginan untuk menciptakan tempat yang nyaman, kami menghadirkan pilihan kopi berkualitas dengan cita rasa yang khas dan berkarakter. Setiap biji kopi dipilih dengan penuh perhatian dan diolah melalui proses yang tepat untuk menghasilkan rasa dan aroma terbaik dalam setiap cangkir. Lebih dari sekadar menikmati kopi, kami ingin menjadi ruang untuk bertemu, berbagi cerita, menyelesaikan pekerjaan, atau sekadar beristirahat sejenak dari kesibukan. Karena bagi kami, secangkir kopi yang baik bukan hanya tentang bagaimana rasanya, tetapi juga tentang cerita, suasana, dan momen berharga yang tercipta di setiap kunjungan."
                 splitBy="word"
                 hinge="top"
                 trigger="scroll"
