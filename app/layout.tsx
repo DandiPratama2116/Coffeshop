@@ -11,8 +11,8 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: "Norma Coffee Pekanbaru",
-  description: "Nikmati Kopi Terbaik di Caffe Norma Pekanbaru",
+  title: "Coffee Shop Pekanbaru",
+  description: "Nikmati Kopi Terbaik di Coffee Shop Pekanbaru",
 };
 
 export default function RootLayout({
@@ -28,7 +28,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
         <link
-          href="/assets/LogoNorma.jpg"
+          href="/assets/Coffeshoplogo.jpeg"
           rel="icon"
           type="image/jpeg"
         />

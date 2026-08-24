@@ -9,7 +9,7 @@ export default function HeroSection() {
           className="w-full h-full bg-cover bg-center opacity-80"
           data-alt="A striking, high-contrast, wide-angle cinematic shot of dark roasted espresso beans mid-air, with a splash of rich, dark coffee."
           style={{
-            backgroundImage: `url('/assets/Norma.jpeg')`,
+            backgroundImage: `url('/assets/Latarbgcoffe_HD.jpg')`,
           }}
         ></div>
         <div className="absolute inset-0 bg-black/40"></div>
@@ -24,7 +24,7 @@ export default function HeroSection() {
               Kopi Terbaik
             </span>{" "}
             <br className="" />
-            <span style={{ color: '#1784e9c1' }}>di Caffe Norma</span>
+            <span style={{ color: '#1784e9c1' }}>di Coffee Shop</span>
           </h1>
           <p className="font-body-lg text-base md:text-lg text-white/90 max-w-lg mb-10 leading-relaxed">
             Tempat terbaik untuk menikmati kopi berkualitas tinggi dengan cita rasa istimewa suasana yang nyaman, berkarakter, dan penuh cerita. Lebih dari sekadar café.

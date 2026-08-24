@@ -2,11 +2,11 @@ import AccordionGallery, { AccordionItem } from '../ui/AccordionGallery';
 
 export default function GallerySection() {
   const galleryItems: AccordionItem[] = [
-    { image: '/assets/Image1.jpg', label: 'Suasana Nyaman'},
-    { image: '/assets/Image2.jpg', label: 'Kopi Pilihan' },
-    { image: '/assets/Image3.jpg', label: 'Estetika Ruang' },
-    { image: '/assets/Image4.jpg', label: 'Momen Bersama' },
-    { image: '/assets/Image5.jpg', label: 'Sudut Favorit' }
+    { image: '/assets/img1.jpeg', label: 'Suasana Nyaman'},
+    { image: '/assets/img2.jpeg', label: 'Dengan baragam' },
+    { image: '/assets/img3.jpeg', label: 'Estetika Ruang' },
+    { image: '/assets/img4.jpeg', label: 'Momen Bersama' },
+    { image: '/assets/img5.jpeg', label: 'Kopi Pilihan' }
   ];
 
   return (

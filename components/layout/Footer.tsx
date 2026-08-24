@@ -18,13 +18,13 @@ export default function Footer() {
                 <div className="relative">
                   <div className="absolute inset-0 rounded-full bg-white/10 blur-md animate-pulse"></div>
                   <img
-                    alt="Caffe Norma Logo"
+                    alt="Coffee Shop Logo"
                     className="h-14 w-14 rounded-full object-cover border-2 border-white/20 relative z-10"
-                    src="/assets/LogoNorma.jpg"
+                    src="/assets/Coffeshoplogo.jpeg"
                   />
                 </div>
                 <span className="font-display-lg text-4xl text-white tracking-tighter drop-shadow-md">
-                  Caffe Norma
+                  Coffee Shop
                 </span>
               </div>
               <p className="font-body-lg text-white/70 max-w-sm leading-relaxed mb-8 italic">
@@ -92,11 +92,8 @@ export default function Footer() {
             </h4>
             
             <div className="space-y-6">
-              <a
-                href="https://www.google.com/maps/search/?api=1&query=Caffe+Norma,+Jl.+Muchtar+Lutfi+No.69,+Simpang+Baru,+Pekanbaru"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex gap-4 items-start group"
+              <div
+                className="flex gap-4 items-start group cursor-default"
               >
                 <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0 group-hover:bg-white/20 transition-all duration-300">
                   <span className="material-symbols-outlined text-white/80 group-hover:text-white transition-colors duration-300">
@@ -104,9 +101,9 @@ export default function Footer() {
                   </span>
                 </div>
                 <address className="font-body-md text-white/60 group-hover:text-white transition-colors duration-300 not-italic leading-relaxed pt-1">
-                  Jl. Muchtar Lutfi No.69, Simpang Baru, Kec. Tampan, Kota Pekanbaru, Riau 28292
+                  Jl. Alamat Demo No. 123, Kota Demo, Provinsi Demo 12345
                 </address>
-              </a>
+              </div>
             </div>
           </div>
 
@@ -115,7 +112,7 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="font-label-sm text-white/40 uppercase tracking-widest flex items-center gap-2 text-center md:text-left">
-            © 2026 Caffe Norma. <span className="hidden md:inline">All Rights Reserved.</span>
+            © 2026 Coffee Shop. <span className="hidden md:inline">All Rights Reserved.</span>
           </p>
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse shadow-[0_0_8px_rgba(96,165,250,0.8)]"></span>
