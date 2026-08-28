@@ -11,12 +11,48 @@ import WaitingView from './WaitingView';
 interface OrderMenuProps {
   customerName: string;
   tableNumber: string;
+  tableDatabaseId: number;
   seatingArea: string;
   onBack: () => void;
 }
 
-export default function OrderMenu({ customerName, tableNumber, seatingArea, onBack }: OrderMenuProps) {
+export default function OrderMenu({ customerName, tableNumber, tableDatabaseId, seatingArea, onBack }: OrderMenuProps) {
   const [activeCategory, setActiveCategory] = useState('Coffee');
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [createdOrderId, setCreatedOrderId] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'}/customer/products`)
+      .then(res => res.json())
+      .then(result => {
+        if(result.success && result.data) {
+          const backendItems = result.data.map((p: any) => {
+            // Build image path: support full URL, /assets/... path, or bare filename
+            let imageSrc: string | null = null;
+            if (p.image) {
+              if (p.image.startsWith('http') || p.image.startsWith('/')) {
+                imageSrc = p.image;
+              } else {
+                // Bare filename like "Espresso.jpeg" → resolve to /assets/Menu/
+                imageSrc = `/assets/Menu/${p.image}`;
+              }
+            }
+            return {
+              id: String(p.id),
+              name: p.nama_menu,
+              description: p.deskripsi,
+              price: p.harga,
+              category: p.category?.nama_kategori || 'Coffee',
+              subCategory: p.category?.nama_kategori || 'Coffee',
+              image: imageSrc
+            };
+          });
+          if (backendItems.length > 0) setMenuItems(backendItems);
+          else setMenuItems(MENU_ITEMS);
+        }
+      })
+      .catch(() => setMenuItems(MENU_ITEMS));
+  }, []);
   const [cart, setCart] = useState<{ item: MenuItem; quantity: number }[]>([]);
   const [currentView, setCurrentView] = useState<'menu' | 'cart' | 'payment' | 'waiting'>('menu');
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
@@ -107,8 +143,8 @@ export default function OrderMenu({ customerName, tableNumber, seatingArea, onBa
   }));
 
   const filteredMenu = activeCategory === 'All'
-    ? MENU_ITEMS
-    : MENU_ITEMS.filter(item => item.category === activeCategory);
+    ? (menuItems.length > 0 ? menuItems : MENU_ITEMS)
+    : (menuItems.length > 0 ? menuItems : MENU_ITEMS).filter(item => item.category === activeCategory);
 
   const addToCart = (item: MenuItem) => {
     setCart(prev => {
@@ -149,9 +185,13 @@ export default function OrderMenu({ customerName, tableNumber, seatingArea, onBa
     return (
       <PaymentView
         totalAmount={totalPrice}
+        customerName={customerName}
+        tableId={tableDatabaseId}
+        cart={cart}
         onBack={() => setCurrentView('cart')}
-        onPaySuccess={() => {
+        onPaySuccess={(orderId) => {
           setCart([]);
+          setCreatedOrderId(orderId);
           setCurrentView('waiting');
         }}
       />
@@ -161,7 +201,11 @@ export default function OrderMenu({ customerName, tableNumber, seatingArea, onBa
   if (currentView === 'waiting') {
     return (
       <WaitingView
-        onBackToMenu={() => setCurrentView('menu')}
+        orderId={createdOrderId}
+        onBackToMenu={() => {
+          setCreatedOrderId(null);
+          setCurrentView('menu');
+        }}
       />
     );
   }
@@ -214,17 +258,17 @@ export default function OrderMenu({ customerName, tableNumber, seatingArea, onBa
 
                 <div className="relative z-10 w-2/3">
                   <h2 className="text-white font-bold text-lg leading-tight mb-1 whitespace-pre-line">{promo.title}</h2>
-                  <button 
-                  onClick={() => {
-                    addToCart(promo.item as MenuItem);
-                    setPromoCode(promo.code);
-                    setAppliedPromo(true);
-                    setCurrentView('cart');
-                  }}
-                  className="mt-3 bg-white text-stone-900 text-xs font-bold px-4 py-2 rounded-full hover:bg-stone-100 transition-colors w-max shadow-sm active:scale-95"
-                >
-                  Order Now
-                </button>
+                  <button
+                    onClick={() => {
+                      addToCart(promo.item as MenuItem);
+                      setPromoCode(promo.code);
+                      setAppliedPromo(true);
+                      setCurrentView('cart');
+                    }}
+                    className="mt-3 bg-white text-stone-900 text-xs font-bold px-4 py-2 rounded-full hover:bg-stone-100 transition-colors w-max shadow-sm active:scale-95"
+                  >
+                    Order Now
+                  </button>
                 </div>
 
                 {/* Images overlapping on right */}

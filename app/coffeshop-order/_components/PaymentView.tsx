@@ -2,14 +2,23 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import { MenuItem } from '../_data/menuData';
+
+interface CartItem {
+  item: MenuItem;
+  quantity: number;
+}
 
 interface PaymentViewProps {
   totalAmount: number;
+  customerName: string;
+  tableId: number;
+  cart: CartItem[];
   onBack: () => void;
-  onPaySuccess: () => void;
+  onPaySuccess: (orderId: number) => void;
 }
 
-export default function PaymentView({ totalAmount, onBack, onPaySuccess }: PaymentViewProps) {
+export default function PaymentView({ totalAmount, customerName, tableId, cart, onBack, onPaySuccess }: PaymentViewProps) {
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -36,14 +45,47 @@ export default function PaymentView({ totalAmount, onBack, onPaySuccess }: Payme
     }
   ];
 
-  const handlePay = () => {
+  const handlePay = async () => {
     if (!selectedMethod) return;
     setIsProcessing(true);
-    // Simulate payment processing
-    setTimeout(() => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'}/customer/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customer_id: 0, customer_name: customerName, table_id: tableId, items: cart.map(({ item, quantity }) => ({ menu_id: Number(item.id.replace(/\D/g, '')) || 1, quantity })) }),
+      });
+      const result = await response.json();
+      console.log("Create order result:", result);
+      if (!response.ok) throw new Error(result.message || 'Order gagal disimpan.');
+
+      const orderId = result.data?.id || 0;
+
+      // Create Payment Record
+      try {
+        const paymentResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'}/customer/payments`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            order_id: orderId,
+            payment_method: selectedMethod,
+            amount: totalAmount,
+            transaction_id: 'TRX-' + Math.random().toString(36).substring(2, 10).toUpperCase()
+          }),
+        });
+        if (!paymentResponse.ok) {
+          console.error("Payment gagal disimpan di database, namun order sukses.");
+        }
+      } catch (err) {
+        console.error("Network error saving payment:", err);
+      }
+
+      console.log("Passing orderId to onPaySuccess:", orderId);
+      onPaySuccess(orderId);
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : 'Order gagal disimpan.');
+    } finally {
       setIsProcessing(false);
-      onPaySuccess();
-    }, 1500);
+    }
   };
 
   return (

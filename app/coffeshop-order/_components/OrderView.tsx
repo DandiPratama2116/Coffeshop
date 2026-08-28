@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import OrderMenu from './OrderMenu';
 import { Montserrat } from 'next/font/google';
@@ -19,10 +19,36 @@ export default function OrderView({ tableId }: OrderViewProps) {
   const [step, setStep] = useState<'form' | 'menu'>('form');
   const [customerName, setCustomerName] = useState('');
   const [tableNumber, setTableNumber] = useState(tableId);
+  const [tableDatabaseId, setTableDatabaseId] = useState(0);
   const [seatingArea, setSeatingArea] = useState('Indoor');
+  const [tableStatus, setTableStatus] = useState<'loading' | 'available' | 'occupied' | 'missing'>('loading');
+  const [tableError, setTableError] = useState('');
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${apiBase}/customer/tables/number/${encodeURIComponent(tableId)}`)
+      .then(response => response.ok ? response.json() : Promise.reject(new Error('Meja tidak ditemukan')))
+      .then(result => {
+        if (cancelled) return;
+        const table = result.data;
+        if (!table || !['available', 'occupied'].includes(table.status)) throw new Error('Status meja tidak valid');
+        setTableNumber(String(table.table_number));
+        setTableDatabaseId(Number(table.id));
+        setTableStatus(table.status);
+        setSeatingArea(table.seating_area || 'Indoor');
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return;
+        setTableStatus('missing');
+        setTableError(error instanceof Error ? error.message : 'Gagal terhubung ke database meja');
+      });
+    return () => { cancelled = true; };
+  }, [apiBase, tableId]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (tableStatus !== 'available') return;
     setStep('menu');
   };
 
@@ -32,6 +58,7 @@ export default function OrderView({ tableId }: OrderViewProps) {
         <OrderMenu
           customerName={customerName}
           tableNumber={tableNumber}
+          tableDatabaseId={tableDatabaseId}
           seatingArea={seatingArea}
           onBack={() => setStep('form')}
         />
@@ -93,6 +120,9 @@ export default function OrderView({ tableId }: OrderViewProps) {
             />
           </div>
 
+          <div className="relative group">
+          </div>
+
           {/* 3. Input No Meja */}
           <div className="relative group">
             <label htmlFor="tableNumber" className="block text-xs font-medium italic text-stone-800 uppercase tracking-wider mb-2">
@@ -102,50 +132,27 @@ export default function OrderView({ tableId }: OrderViewProps) {
               type="number"
               id="tableNumber"
               value={tableNumber}
-              onChange={(e) => setTableNumber(e.target.value)}
-              placeholder="No "
+              readOnly
               required
-              className="w-full px-5 py-4 rounded-2xl border border-[#edeae6] bg-[#f9f8f6] focus:bg-white focus:ring-4 focus:ring-[#e8ded7] focus:border-[#c7a48d] outline-none transition-all duration-300 shadow-sm text-stone-900 placeholder-stone-400 font-medium italic [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="w-full px-5 py-4 rounded-2xl border border-[#edeae6] bg-[#f1eee9] text-stone-600 outline-none shadow-sm font-medium italic cursor-not-allowed"
             />
           </div>
 
-          {/* 4. Lokasi Tempat Duduk */}
+          {/* 4. Lokasi Tempat Duduk dari meja yang dipindai */}
           <div>
             <label className="block text-xs font-medium italic text-stone-800 uppercase tracking-wider mb-3">
               Lokasi Tempat Duduk <span className="text-red-500">*</span>
             </label>
-            <div className="grid grid-cols-2 gap-3">
-              {['Indoor', 'Outdoor', 'Lt. 2', 'VIP'].map((area) => (
-                <label
-                  key={area}
-                  className={`
-                    cursor-pointer relative rounded-2xl px-4 py-3.5 text-sm font-medium italic flex items-center justify-center transition-all duration-300 border
-                    ${seatingArea === area
-                      ? 'bg-[#7a6a60] text-white border-[#7a6a60] shadow-md shadow-[#7a6a60]/20 transform scale-[1.02]'
-                      : 'bg-[#f9f8f6] border-[#edeae6] text-stone-800 hover:bg-white shadow-sm'
-                    }
-                  `}
-                >
-                  <input
-                    type="radio"
-                    name="seatingArea"
-                    value={area}
-                    className="sr-only"
-                    checked={seatingArea === area}
-                    onChange={() => setSeatingArea(area)}
-                  />
-                  <span>{area}</span>
-                  {seatingArea === area && (
-                    <span className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-white/80"></span>
-                  )}
-                </label>
-              ))}
+            <div className="rounded-2xl px-5 py-4 bg-[#f1eee9] text-stone-900 border border-[#f1eee9] shadow-md shadow-[#7a6a60]/20 flex items-center justify-between gap-3 cursor-not-allowed">
+              <p className="text-base font-bold italic">{seatingArea}</p>
             </div>
           </div>
 
           <div className="pt-6">
             <button
               type="submit"
+              disabled={tableStatus !== 'available'}
+              aria-disabled={tableStatus !== 'available'}
               className="w-full relative overflow-hidden bg-[#5c4d42] text-white font-bold italic py-4 px-4 rounded-2xl shadow-xl shadow-[#5c4d42]/30 hover:shadow-2xl hover:bg-[#4a3d34] transform active:scale-[0.98] transition-all duration-300 group"
             >
               <span className="relative z-10 text-[#fdfdfc] flex items-center justify-center gap-2">

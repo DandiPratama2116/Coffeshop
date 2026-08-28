@@ -1,0 +1,94 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+/* Global Variables for Admin Theme */
+:root {
+  --admin-font-primary: 'Outfit', sans-serif;
+  --admin-font-secondary: 'Inter', sans-serif;
+  --admin-sidebar-bg: #0f172a; /* Slate 900 */
+  --admin-bg-light: #f8fafc; /* Slate 50 */
+  --admin-accent: #3b82f6; /* Blue 500 */
+  --admin-accent-glow: rgba(59, 130, 246, 0.4);
+}
+
+.admin-shell,
+.admin-shell *:not(.material-symbols-outlined) {
+  font-family: var(--admin-font-primary);
+}
+
+.admin-shell .font-inter {
+  font-family: var(--admin-font-secondary);
+}
+
+.admin-shell .material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+}
+
+/* Base Body Styles */
+.admin-shell {
+  background-color: var(--admin-bg-light);
+  color: #334155; /* Slate 700 */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Glassmorphism Utilities */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+}
+
+.glass-header {
+  background: rgba(248, 250, 252, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+}
+
+/* Custom Scrollbar */
+.admin-shell ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.admin-shell ::-webkit-scrollbar-track {
+  background: transparent;
+}
+.admin-shell ::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 999px;
+}
+.admin-shell ::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.6);
+}
+
+/* Subtle Entry Animations */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.stagger-1 { animation-delay: 100ms; }
+.stagger-2 { animation-delay: 200ms; }
+.stagger-3 { animation-delay: 300ms; }
+.stagger-4 { animation-delay: 400ms; }
+
+/* Micro-interactions */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+}

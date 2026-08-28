@@ -1,4 +1,45 @@
+"use client";
+
+import { useState } from "react";
+
 export default function ReservationSection() {
+  const [form, setForm] = useState({ name: "", email: "", date: "", time: "", guests: "2", description: "" });
+  const [status, setStatus] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const updateField = (field: keyof typeof form, value: string) => {
+    setForm((current) => ({ ...current, [field]: value }));
+  };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setStatus("");
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"}/customer/reservations`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          reservation_date: form.date,
+          reservation_time: form.time,
+          number_of_people: Number(form.guests),
+          description: form.description,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message || "Reservasi gagal dikirim.");
+      setStatus("Reservasi berhasil dikirim. Konfirmasi sudah dikirim ke email Anda.");
+      setForm({ name: "", email: "", date: "", time: "", guests: "2", description: "" });
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Reservasi gagal dikirim.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <section id="Reservasi" className="py-24 px-margin-mobile md:px-margin-desktop bg-surface relative overflow-hidden">
       <div className="absolute right-0 top-0 w-1/2 h-full bg-primary/5 blur-[100px] pointer-events-none"></div>
@@ -11,7 +52,7 @@ export default function ReservationSection() {
             Pesan tempat untuk pengalaman menikmati kopi yang tak terlupakan.
           </p>
         </div>
-        <form className="space-y-6">
+        <form className="space-y-6" onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="relative">
               <input
@@ -19,6 +60,9 @@ export default function ReservationSection() {
                 id="name"
                 placeholder="Nama Lengkap"
                 type="text"
+                value={form.name}
+                onChange={(event) => updateField("name", event.target.value)}
+                required
               />
             </div>
             <div className="relative">
@@ -27,6 +71,9 @@ export default function ReservationSection() {
                 id="email"
                 placeholder="Alamat Email"
                 type="email"
+                value={form.email}
+                onChange={(event) => updateField("email", event.target.value)}
+                required
               />
             </div>
           </div>
@@ -36,13 +83,18 @@ export default function ReservationSection() {
                 className="w-full bg-white/5 border border-outline/40 rounded-xl text-on-surface font-body-md px-5 py-4 focus:outline-none focus:border-primary/50 focus:bg-white/10 transition-all placeholder:text-on-surface-variant/60 backdrop-blur-md [color-scheme:light]"
                 id="date"
                 type="date"
+                value={form.date}
+                onChange={(event) => updateField("date", event.target.value)}
+                required
               />
             </div>
             <div className="relative">
-              <select
+              <select 
                 className="w-full bg-white/5 border border-outline/40 rounded-xl text-on-surface font-body-md px-5 py-4 focus:outline-none focus:border-primary/50 focus:bg-white/10 transition-all appearance-none backdrop-blur-md"
                 id="guests"
                 defaultValue="2"
+                value={form.guests}
+                onChange={(event) => updateField("guests", event.target.value)}
               >
                 <option className="bg-surface-container-high text-on-surface" value="1">
                   1 Orang
@@ -63,20 +115,34 @@ export default function ReservationSection() {
             </div>
           </div>
           <div className="relative">
+            <input
+              className="w-full bg-white/5 border border-outline/40 rounded-xl text-on-surface font-body-md px-5 py-4 focus:outline-none focus:border-primary/50 focus:bg-white/10 transition-all placeholder:text-on-surface-variant/60 backdrop-blur-md [color-scheme:light]"
+              id="time"
+              type="time"
+              value={form.time}
+              onChange={(event) => updateField("time", event.target.value)}
+              required
+            />
+          </div>
+          <div className="relative">
             <textarea
               className="w-full bg-white/5 border border-outline/40 rounded-xl text-on-surface font-body-md px-5 py-4 focus:outline-none focus:border-primary/50 focus:bg-white/10 transition-all placeholder:text-on-surface-variant/60 backdrop-blur-md resize-none"
               id="description"
               placeholder="Catatan Khusus / Deskripsi (Opsional)"
               rows={4}
+              value={form.description}
+              onChange={(event) => updateField("description", event.target.value)}
             ></textarea>
           </div>
           <div className="pt-6 text-center">
             <button
               className="bg-primary/10 backdrop-blur-md border border-primary/50 text-primary font-label-bold px-12 py-4 rounded-full transition-all duration-300 hover:bg-primary/20 hover:-translate-y-1 shadow-[0_0_20px_rgba(0,0,0,0.05)] hover:shadow-[0_0_30px_rgba(0,0,0,0.1)] w-full md:w-auto"
               type="submit"
+              disabled={isSubmitting}
             >
-              Konfirmasi Reservasi
+              {isSubmitting ? "Mengirim Reservasi..." : "Konfirmasi Reservasi"}
             </button>
+            {status && <p className="mt-4 text-sm font-medium text-on-surface-variant" role="status">{status}</p>}
           </div>
         </form>
       </div>

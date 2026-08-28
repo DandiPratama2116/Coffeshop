@@ -9,33 +9,73 @@ const montserrat = Montserrat({
   style: ['normal', 'italic'],
 });
 
-export default function WaitingView({ onBackToMenu }: { onBackToMenu: () => void }) {
-  const [isPreparing, setIsPreparing] = useState(true);
+interface WaitingViewProps {
+  orderId: number | null;
+  onBackToMenu: () => void;
+}
+
+export default function WaitingView({ orderId, onBackToMenu }: WaitingViewProps) {
+  const [status, setStatus] = useState('pending'); // pending, processing, ready, completed
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    // Memulai animasi progress bar segera setelah komponen dimuat
-    const progressTimer = setTimeout(() => {
-      setProgress(100);
-    }, 50);
+    if (!orderId) return;
 
-    // Setelah 10 detik, beralih ke status "terkirim"
-    const prepareTimer = setTimeout(() => {
-      setIsPreparing(false);
+    // Start progress bar
+    setTimeout(() => setProgress(15), 50);
 
-      // Tunggu 8 detik lagi hingga pengguna membaca pesan sukses, lalu pengalihan otomatis
-      const redirectTimer = setTimeout(() => {
-        onBackToMenu();
-      }, 8000);
+    const interval = setInterval(async () => {
+      console.log("Polling order:", orderId);
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'}/customer/orders/${orderId}`);
+        console.log("Poll response status:", response.status);
+        const result = await response.json();
+        console.log("Poll result:", result);
+        
+        if (result.success && result.data) {
+          const currentStatus = result.data.status;
+          setStatus(currentStatus);
 
-      return () => clearTimeout(redirectTimer);
-    }, 10000);
+          if (currentStatus === 'processing') setProgress(50);
+          if (currentStatus === 'ready') setProgress(75);
+          
+          if (currentStatus === 'completed') {
+            setProgress(100);
+            clearInterval(interval);
+            setTimeout(() => {
+              onBackToMenu();
+            }, 5000);
+          }
+        }
+      } catch (error) {
+        console.error("Gagal mengambil status pesanan", error);
+      }
+    }, 3000);
 
-    return () => {
-      clearTimeout(progressTimer);
-      clearTimeout(prepareTimer);
-    };
-  }, [onBackToMenu]);
+    return () => clearInterval(interval);
+  }, [orderId, onBackToMenu]);
+
+  const isPreparing = status === 'pending' || status === 'processing';
+  const isReady = status === 'ready';
+  const isCompleted = status === 'completed';
+
+  let title = 'Menunggu Konfirmasi...';
+  let subtitle = 'Pesanan Anda sedang diverifikasi oleh kasir/admin.';
+  let statusBadge = 'Pending';
+
+  if (status === 'processing') {
+    title = 'Pesanan Sedang Dibuat!';
+    subtitle = 'Terima kasih! Barista kami sedang menyiapkan pesanan Anda.';
+    statusBadge = 'Processing';
+  } else if (status === 'ready') {
+    title = 'Pesanan Siap!';
+    subtitle = 'Pesanan Anda sudah selesai dan akan segera diantar ke meja.';
+    statusBadge = 'Ready';
+  } else if (status === 'completed') {
+    title = 'Pesanan Diantar!';
+    subtitle = 'Pesanan Anda sudah diantar. Selamat menikmati!';
+    statusBadge = 'Completed';
+  }
 
   return (
     <div className={`min-h-screen bg-gradient-to-br from-[#fafafa] via-amber-50/30 to-amber-100/40 flex flex-col items-center justify-center p-6 text-center relative overflow-hidden ${montserrat.className}`}>
@@ -49,7 +89,7 @@ export default function WaitingView({ onBackToMenu }: { onBackToMenu: () => void
 
         {/* Animation Container */}
         <div className="relative w-40 h-40 mb-6 flex items-center justify-center">
-          {isPreparing ? (
+          {!isCompleted && !isReady ? (
             <>
               {/* Glowing Background */}
               <div className="absolute inset-0 bg-amber-100/50 rounded-full animate-ping opacity-30"></div>
@@ -92,22 +132,20 @@ export default function WaitingView({ onBackToMenu }: { onBackToMenu: () => void
         </div>
 
         {/* Typography */}
-        <h1 className={`text-2xl font-extrabold mb-3 transition-colors duration-500 ${isPreparing ? 'text-transparent bg-clip-text bg-gradient-to-r from-stone-800 to-stone-600' : 'text-emerald-600'}`}>
-          {isPreparing ? 'Pesanan Sedang Dibuat!' : 'Pesanan Siap Diantar!'}
+        <h1 className={`text-2xl font-extrabold mb-3 transition-colors duration-500 ${!isCompleted ? 'text-transparent bg-clip-text bg-gradient-to-r from-stone-800 to-stone-600' : 'text-emerald-600'}`}>
+          {title}
         </h1>
         <p className="text-stone-500 text-sm leading-relaxed mb-6 transition-all duration-300 h-10">
-          {isPreparing
-            ? 'Terima kasih! Pesanan Anda sedang disiapkan oleh barista kami.'
-            : 'Selesai! Pesanan Anda sedang dibawa menuju meja Anda.'}
+          {subtitle}
         </p>
 
         {/* Progress Bar Container */}
         <div className="w-full bg-stone-100 rounded-full h-1.5 overflow-hidden shadow-inner relative">
           <div
-            className={`h-full rounded-full transition-all ease-linear ${isPreparing ? 'bg-gradient-to-r from-amber-400 to-amber-600' : 'bg-emerald-500'}`}
+            className={`h-full rounded-full transition-all ease-linear ${isCompleted || isReady ? 'bg-emerald-500' : 'bg-gradient-to-r from-amber-400 to-amber-600'}`}
             style={{
-              width: isPreparing ? `${progress}%` : '100%',
-              transitionDuration: isPreparing ? '5000ms' : '500ms'
+              width: `${progress}%`,
+              transitionDuration: '1000ms'
             }}
           />
         </div>
@@ -115,8 +153,8 @@ export default function WaitingView({ onBackToMenu }: { onBackToMenu: () => void
         {/* Status Text below progress bar */}
         <div className="w-full flex justify-between mt-2 px-1">
           <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">Status</span>
-          <span className={`text-[10px] font-bold uppercase tracking-wider transition-colors duration-300 ${isPreparing ? 'text-amber-600 animate-pulse' : 'text-emerald-600'}`}>
-            {isPreparing ? 'Processing' : 'Delivering'}
+          <span className={`text-[10px] font-bold uppercase tracking-wider transition-colors duration-300 ${!isCompleted && !isReady ? 'text-amber-600 animate-pulse' : 'text-emerald-600'}`}>
+            {statusBadge}
           </span>
         </div>
 
