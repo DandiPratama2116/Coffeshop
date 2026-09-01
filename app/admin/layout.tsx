@@ -1,14 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import "./admin.css";
+
+interface ReservationNotify {
+  id: number;
+  customer_name: string;
+  customer_email: string;
+  reservation_date: string;
+  reservation_time: string;
+  number_of_people: number;
+  description: string;
+  status: string;
+  created_at: string;
+}
 
 const navItems = [
   { href: "/admin/dashboard", label: "Dashboard", icon: "grid_view" },
   { href: "/admin/reports", label: "Laporan", icon: "bar_chart" },
   { href: "/admin/orders", label: "Pesanan", icon: "receipt_long" },
+  { href: "/admin/reservations", label: "Reservasi", icon: "event_seat", isReservation: true },
   { href: "/admin/menu", label: "Menu Produk", icon: "restaurant_menu" },
   { href: "/admin/categories", label: "Kategori", icon: "category" },
   { href: "/admin/tables", label: "Meja & QR", icon: "table_restaurant" },
@@ -23,39 +36,118 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [adminName, setAdminName] = useState("Admin");
 
+  // State Notifikasi Reservasi Realtime
+  const [pendingReservations, setPendingReservations] = useState<ReservationNotify[]>([]);
+  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+  const [incomingToast, setIncomingToast] = useState<ReservationNotify | null>(null);
+  const knownIdsRef = useRef<Set<number>>(new Set());
+  const isFirstLoadRef = useRef(true);
+  const notifDropdownRef = useRef<HTMLDivElement>(null);
+
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+
+  const playNotificationChime = () => {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.25, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.35);
+    } catch {}
+  };
+
+  const checkReservations = async () => {
+    try {
+      const res = await fetch(`${apiBase}/admin/reservations`);
+      const result = await res.json();
+      if (result.success && Array.isArray(result.data)) {
+        const pendings: ReservationNotify[] = result.data.filter((r: ReservationNotify) => r.status === "pending");
+        setPendingReservations(pendings);
+
+        if (!isFirstLoadRef.current) {
+          // Cari apakah ada reservasi baru yang belum pernah muncul
+          const newReservation = pendings.find((r) => !knownIdsRef.current.has(r.id));
+          if (newReservation) {
+            playNotificationChime();
+            setIncomingToast(newReservation);
+            setTimeout(() => setIncomingToast(null), 8000);
+          }
+        }
+
+        // Simpan semua ID yang sudah diketahui
+        const newSet = new Set<number>();
+        pendings.forEach((r) => newSet.add(r.id));
+        knownIdsRef.current = newSet;
+        isFirstLoadRef.current = false;
+      }
+    } catch (err) {
+      // Abaikan error koneksi sementara saat polling
+    }
+  };
+
   useEffect(() => {
     if (pathname === "/admin/login") return;
 
     const isLoggedIn = localStorage.getItem("admin_logged_in");
     if (!isLoggedIn) {
-      router.replace("/admin/login");
+      setTimeout(() => {
+        router.replace("/admin/login");
+      }, 0);
     } else {
       const nextAdminName = localStorage.getItem("admin_name") || "Grace Stanley";
       const timer = window.setTimeout(() => {
         setAdminName(nextAdminName);
         setIsLoading(false);
       }, 0);
-      return () => window.clearTimeout(timer);
+
+      // Jalankan pengecekan reservasi secara realtime
+      checkReservations();
+      const interval = setInterval(checkReservations, 6000);
+
+      return () => {
+        window.clearTimeout(timer);
+        clearInterval(interval);
+      };
     }
   }, [pathname, router]);
 
+  // Tutup dropdown notifikasi saat klik di luar
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notifDropdownRef.current && !notifDropdownRef.current.contains(event.target as Node)) {
+        setShowNotifDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const handleLogout = async () => {
     const sessionId = localStorage.getItem("admin_session_id");
-    if (sessionId) {
-      try {
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api"}/admin/Logout`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ session_id: sessionId }),
-        });
-      } catch (e) {
-        console.error("Logout API failed", e);
-      }
+    try {
+      await fetch(`${apiBase}/admin/logout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: sessionId || "" }),
+      });
+    } catch (e) {
+      console.error("Gagal request logout:", e);
+    } finally {
+      localStorage.removeItem("admin_logged_in");
+      localStorage.removeItem("admin_token");
+      localStorage.removeItem("admin_name");
+      localStorage.removeItem("admin_session_id");
+      router.replace("/admin/login");
     }
-    localStorage.removeItem("admin_logged_in");
-    localStorage.removeItem("admin_name");
-    localStorage.removeItem("admin_session_id");
-    router.replace("/admin/login");
   };
 
   if (pathname === "/admin/login") {
@@ -73,81 +165,131 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
+  const pendingCount = pendingReservations.length;
+
   return (
-    <div className="min-h-screen bg-slate-50 flex font-sans antialiased text-slate-700 admin-shell overflow-hidden">
+    <div className="min-h-screen flex font-sans antialiased admin-shell overflow-hidden" style={{ background: '#f0f2f5' }}>
+      {/* Toast Alert Melayang Saat Ada Reservasi Baru Masuk - Bersih & Elegan */}
+      {incomingToast && (
+        <div className="fixed top-5 right-5 z-50 max-w-sm w-full bg-white text-slate-800 p-4 rounded-xl shadow-xl border border-slate-200 flex items-start gap-3">
+          <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
+            <span className="material-symbols-outlined text-lg">event_seat</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-1">
+              <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Reservasi Masuk</span>
+              <button
+                onClick={() => setIncomingToast(null)}
+                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-sm">close</span>
+              </button>
+            </div>
+            <p className="text-xs font-bold text-slate-900 truncate mt-0.5">{incomingToast.customer_name}</p>
+            <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">
+              {incomingToast.description || `${incomingToast.reservation_date.substring(0, 10)} jam ${incomingToast.reservation_time}`}
+            </p>
+            <div className="mt-2.5">
+              <button
+                onClick={() => {
+                  setIncomingToast(null);
+                  router.push("/admin/reservations");
+                }}
+                className="px-3 py-1 rounded-md bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-medium transition-colors cursor-pointer"
+              >
+                Lihat & Proses
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Overlay Mobile */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-30 lg:hidden transition-opacity"
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-30 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* Sidebar - Sleek Dark Theme */}
+      {/* ── Sidebar ─────────────────────────────────────────── */}
       <aside
-        className={`fixed top-0 left-0 h-full w-[260px] bg-[#0f172a] text-slate-300 z-40 transform transition-transform duration-300 ease-in-out flex flex-col justify-between shadow-2xl border-r border-slate-800
+        className={`fixed top-0 left-0 h-full w-[260px] z-40 transform transition-transform duration-300 ease-in-out flex flex-col
           ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
+        style={{ background: '#2d4744' }}
       >
-        {/* Subtle glowing orb in background */}
-        <div className="absolute top-0 left-0 w-full h-48 bg-indigo-500/10 blur-[50px] pointer-events-none" />
-
-        <div className="relative z-10 flex flex-col h-full">
-          {/* Logo Brand */}
-          <div className="flex items-center gap-4 px-6 py-8 border-b border-slate-800/60">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-indigo-500/30">
-              <span className="material-symbols-outlined text-xl">local_cafe</span>
-            </div>
-            <div>
-              <h1 className="text-white font-bold text-lg tracking-wide leading-tight">Caffe Norma</h1>
-              <p className="text-xs text-indigo-300 font-medium tracking-wider uppercase mt-0.5">Admin Workspace</p>
-            </div>
+        {/* Logo Brand */}
+        <div className="flex items-center gap-3 px-6 pt-7 pb-6">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white flex-shrink-0"
+            style={{ background: 'linear-gradient(135deg, #d1a85c, #a37c35)' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '18px', fontVariationSettings: "'FILL' 1" }}>local_cafe</span>
           </div>
+          <div>
+            <h1 className="text-white font-bold text-[15px] leading-tight tracking-wide">Caffe Shop</h1>
+            <p className="text-[11px] font-medium tracking-widest uppercase mt-0.5" style={{ color: '#d1a85c' }}>Admin Workspace</p>
+          </div>
+        </div>
 
-          {/* Navigasi Utama */}
-          <nav aria-label="Navigasi admin" className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-            <p className="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Menu Utama</p>
-            {navItems.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className={`relative flex items-center gap-3.5 px-4 py-3 text-sm font-medium transition-all duration-200 rounded-xl group
-                    ${isActive
-                      ? "bg-indigo-500/15 text-indigo-400 font-semibold"
-                      : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50"
-                    }`}
-                >
-                  {/* Active Indicator Bar */}
-                  {isActive && (
-                    <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-indigo-500 rounded-r-full shadow-[0_0_10px_rgba(99,102,241,0.8)]" />
-                  )}
-                  
+        {/* Nav Label */}
+        <p className="px-6 text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: 'rgba(209,168,92,0.55)' }}>Menu Utama</p>
+
+        {/* Nav Items */}
+        <nav className="flex-1 px-4 py-2 space-y-1 overflow-y-auto overflow-x-hidden">
+          {navItems.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setSidebarOpen(false)}
+                className="flex items-center justify-between px-4 py-3 rounded-2xl text-sm transition-all duration-200 active:scale-[0.97] focus:outline-none group"
+                style={{
+                  color: isActive ? '#2d3f3d' : 'rgba(255,255,255,0.65)',
+                  background: isActive ? '#dedad2' : 'transparent',
+                  fontWeight: isActive ? 700 : 500,
+                  letterSpacing: '0.03em',
+                }}
+                onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.08)'; }}
+                onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+              >
+                <div className="flex items-center gap-3.5">
                   <span
-                    className={`material-symbols-outlined transition-colors duration-200 ${isActive ? "text-indigo-400" : "text-slate-500 group-hover:text-slate-300"}`}
-                    style={{ fontSize: "20px", fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}
+                    className="material-symbols-outlined flex-shrink-0"
+                    style={{
+                      fontSize: '20px',
+                      fontVariationSettings: "'FILL' 1",
+                      color: '#d1a85c',
+                      opacity: isActive ? 1 : 0.65,
+                    }}
                   >
                     {item.icon}
                   </span>
                   <span>{item.label}</span>
-                </Link>
-              );
-            })}
-          </nav>
+                </div>
 
-          {/* Tombol Logout */}
-          <div className="p-4 border-t border-slate-800/60 mt-auto">
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-400 hover:text-rose-400 transition-colors rounded-xl hover:bg-rose-500/10 w-full group"
-            >
-              <span className="material-symbols-outlined text-slate-500 group-hover:text-rose-400 transition-colors" style={{ fontSize: "20px" }}>
-                logout
-              </span>
-              <span>Logout</span>
-            </button>
-          </div>
+                {/* Badge Notifikasi Realtime di Sidebar */}
+                {item.isReservation && pendingCount > 0 && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500 text-slate-950 shadow-xs animate-pulse">
+                    {pendingCount}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Logout */}
+        <div className="p-3 mt-auto border-t" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-3 py-[10px] rounded-xl text-sm font-medium w-full transition-all duration-150 active:scale-[0.97] group cursor-pointer"
+            style={{ color: 'rgba(255,255,255,0.55)', background: 'transparent' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.1)'; (e.currentTarget as HTMLElement).style.color = '#f87171'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.55)'; }}
+          >
+            <span className="material-symbols-outlined" style={{ fontSize: '19px', color: 'rgba(209,168,92,0.7)' }}>logout</span>
+            <span>Logout</span>
+          </button>
         </div>
       </aside>
 
@@ -158,11 +300,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="flex items-center gap-4">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="lg:hidden text-slate-500 hover:text-indigo-600 focus:outline-none transition-colors"
+              className="lg:hidden text-slate-500 hover:text-indigo-600 focus:outline-none transition-all active:scale-95"
             >
               <span className="material-symbols-outlined text-2xl">menu</span>
             </button>
-            
+
             {pathname === "/admin/menu" && (
               <div className="hidden md:flex items-center px-4 py-2 bg-slate-100 rounded-full border border-slate-200/60 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-400 transition-all w-64">
                 <span className="material-symbols-outlined text-slate-400 text-lg mr-2">search</span>
@@ -171,16 +313,82 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             )}
           </div>
 
-          {/* Admin profile */}
+          {/* Admin profile & Notifications */}
           <div className="flex items-center gap-5">
-            <button className="relative text-slate-400 hover:text-indigo-600 transition-colors">
-              <span className="material-symbols-outlined">notifications</span>
-              <span className="absolute top-0 right-0 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-slate-50"></span>
-            </button>
+            {/* Lonceng Notifikasi Realtime dengan Dropdown */}
+            <div className="relative" ref={notifDropdownRef}>
+              <button
+                onClick={() => setShowNotifDropdown(!showNotifDropdown)}
+                className="relative text-slate-500 hover:text-slate-800 transition-colors p-2 rounded-xl hover:bg-slate-100 cursor-pointer"
+                title="Notifikasi Reservasi"
+              >
+                <span className="material-symbols-outlined text-xl">notifications</span>
+                {pendingCount > 0 && (
+                  <span className="absolute top-2 right-2 w-2 h-2 bg-amber-500 rounded-full ring-2 ring-white"></span>
+                )}
+              </button>
+
+              {/* Dropdown Menu Notifikasi - Bersih & Rapi */}
+              {showNotifDropdown && (
+                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden z-50">
+                  <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+                    <span className="font-semibold text-xs text-slate-800">Notifikasi Reservasi</span>
+                    {pendingCount > 0 && (
+                      <span className="text-[11px] font-medium text-slate-500">
+                        {pendingCount} Menunggu
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="max-h-72 overflow-y-auto divide-y divide-slate-100">
+                    {pendingCount === 0 ? (
+                      <div className="p-6 text-center text-slate-400">
+                        <p className="text-xs">Tidak ada reservasi menunggu</p>
+                      </div>
+                    ) : (
+                      pendingReservations.map((item) => (
+                        <div
+                          key={item.id}
+                          className="p-3.5 hover:bg-slate-50 transition-colors flex flex-col gap-1 text-xs cursor-pointer"
+                          onClick={() => {
+                            setShowNotifDropdown(false);
+                            router.push("/admin/reservations");
+                          }}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-semibold text-slate-900">{item.customer_name}</span>
+                            <span className="text-[11px] text-slate-500 font-medium">
+                              {item.reservation_time}
+                            </span>
+                          </div>
+                          <p className="text-slate-600 text-[11px] line-clamp-1">
+                            {item.description || "Permintaan Meja"}
+                          </p>
+                          <div className="flex items-center justify-between text-[10px] text-slate-400 mt-0.5">
+                            <span>{item.reservation_date.substring(0, 10)} • {item.number_of_people} Tamu</span>
+                            <span className="font-medium text-slate-700 hover:underline">Lihat Detail →</span>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  <div className="p-2.5 border-t border-slate-100 text-center bg-slate-50/50">
+                    <Link
+                      href="/admin/reservations"
+                      onClick={() => setShowNotifDropdown(false)}
+                      className="text-xs font-medium text-slate-700 hover:text-slate-900 transition-colors inline-block"
+                    >
+                      Buka Semua Reservasi →
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
 
             <div className="h-6 w-px bg-slate-200"></div>
 
-            <div className="flex items-center gap-3 cursor-pointer group">
+            <div className="flex items-center gap-3 cursor-pointer group active:scale-[0.97] transition-all p-1.5 rounded-2xl hover:bg-slate-50">
               <div className="flex flex-col items-end hidden md:flex">
                 <span className="text-sm font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">{adminName}</span>
                 <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Administrator</span>
@@ -197,8 +405,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </header>
 
         {/* Page Main Content - Scrollable */}
-        <main className="flex-1 overflow-y-auto p-6 md:p-8 bg-slate-50/50">
-          <div key={pathname} className="w-full max-w-7xl mx-auto animate-fade-in-up">
+        <main className="flex-1 overflow-y-auto p-6 md:p-8" style={{ background: '#f0f2f5' }}>
+          <div key={pathname} className="w-full max-w-7xl mx-auto">
             {children}
           </div>
         </main>

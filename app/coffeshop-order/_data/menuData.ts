@@ -6,6 +6,7 @@ export interface MenuItem {
   image?: string;
   category: string;
   subCategory?: string;
+  originalPrice?: number;
 }
 
 export const MENU_CATEGORIES = [

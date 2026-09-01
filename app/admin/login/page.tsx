@@ -13,7 +13,9 @@ export default function AdminLoginPage() {
 
   useEffect(() => {
     if (localStorage.getItem("admin_logged_in")) {
-      router.replace("/admin/dashboard");
+      setTimeout(() => {
+        router.replace("/admin/dashboard");
+      }, 0);
     }
   }, [router]);
 

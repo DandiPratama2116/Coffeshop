@@ -49,7 +49,7 @@ func (c *PaymentController) GetByID(ctx *gin.Context) {
 	}
 
 	data, err := c.service.GetByID(uint(id))
-
+	
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"success": false,

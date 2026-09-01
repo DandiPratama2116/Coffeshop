@@ -161,85 +161,175 @@ export default function AdminMenuPage() {
 
       {/* Modal Form */}
       {showModal && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-md shadow-xl overflow-hidden border border-slate-100">
-            <div className="px-6 py-4 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-slate-800 font-bold text-base">{editing ? "Edit Menu" : "Tambah Menu Baru"}</h2>
-              <button onClick={() => setShowModal(false)} className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700 transition-colors">
-                <span className="material-symbols-outlined text-sm">close</span>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white w-full max-w-[560px] rounded-xl border border-slate-200 shadow-xl overflow-hidden animate-scale-up">
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 pt-5 pb-3">
+              <h2 className="text-lg font-bold text-slate-800 tracking-tight">{editing ? "Edit Menu" : "Tambah Menu"}</h2>
+              <button
+                type="button"
+                onClick={() => setShowModal(false)}
+                className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-md hover:bg-slate-100 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-lg">close</span>
               </button>
             </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1.5 block">Nama Menu</label>
-                <input required value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-slate-800 text-sm focus:outline-none focus:border-[#3B4CB8] focus:bg-white transition-all"
-                  placeholder="Nama menu..." />
+
+            {/* Body - Grid 2 kolom efisien tanpa scroll */}
+            <form onSubmit={handleSubmit} id="menu-form" className="px-6 py-2 grid grid-cols-2 gap-3.5">
+              {/* Nama Menu */}
+              <div className="col-span-1">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5 block" htmlFor="menu_name">
+                  Nama Menu *
+                </label>
+                <input
+                  id="menu_name"
+                  required
+                  value={form.name}
+                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                  className="w-full text-sm bg-white border border-slate-200 hover:border-slate-300 rounded-lg px-3.5 py-2 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  placeholder="Nama menu..."
+                />
               </div>
-              <div>
-                <label className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1.5 block">Deskripsi</label>
-                <textarea required value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-slate-800 text-sm focus:outline-none focus:border-[#3B4CB8] focus:bg-white transition-all resize-none h-20"
-                  placeholder="Deskripsi menu..." />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1.5 block">Harga (Rp)</label>
-                  <input required type="number" min="0" value={form.price} onChange={e => setForm(f => ({ ...f, price: Number(e.target.value) }))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-slate-800 text-sm focus:outline-none focus:border-[#3B4CB8] focus:bg-white transition-all"
-                    placeholder="25000" />
+
+              {/* Harga */}
+              <div className="col-span-1">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5 block" htmlFor="menu_price">
+                  Harga (Rp) *
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-semibold">Rp</span>
+                  <input
+                    id="menu_price"
+                    required
+                    type="number"
+                    min="0"
+                    value={form.price}
+                    onChange={e => setForm(f => ({ ...f, price: Number(e.target.value) }))}
+                    className="w-full text-sm bg-white border border-slate-200 hover:border-slate-300 rounded-lg pl-9 pr-3 py-2 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                    placeholder="25000"
+                  />
                 </div>
-                <div>
-                  <label className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1.5 block">Kategori</label>
-                  <select value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-slate-800 text-sm focus:outline-none focus:border-[#3B4CB8] focus:bg-white transition-all">
-                    {MENU_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
-                  </select>
-                </div>
               </div>
-              <div>
-                <label className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1.5 block">Sub Kategori</label>
-                <input value={form.subCategory} onChange={e => setForm(f => ({ ...f, subCategory: e.target.value }))}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-slate-800 text-sm focus:outline-none focus:border-[#3B4CB8] focus:bg-white transition-all"
-                  placeholder="Basic Coffee, Sweet Edition, dll..." />
+
+              {/* Kategori */}
+              <div className="col-span-1">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5 block" htmlFor="menu_category">
+                  Kategori *
+                </label>
+                <select
+                  id="menu_category"
+                  value={form.category}
+                  onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
+                  className="w-full text-sm bg-white border border-slate-200 hover:border-slate-300 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                >
+                  {MENU_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+                </select>
               </div>
-              <div>
-                <label className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1.5 block">Path / URL Gambar</label>
-                <input value={form.image} onChange={e => setForm(f => ({ ...f, image: e.target.value }))}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-slate-800 text-sm focus:outline-none focus:border-[#3B4CB8] focus:bg-white transition-all"
-                  placeholder="/assets/Menu/nama-gambar.jpg" />
+
+              {/* Sub Kategori */}
+              <div className="col-span-1">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5 block" htmlFor="menu_sub">
+                  Sub Kategori
+                </label>
+                <input
+                  id="menu_sub"
+                  value={form.subCategory}
+                  onChange={e => setForm(f => ({ ...f, subCategory: e.target.value }))}
+                  className="w-full text-sm bg-white border border-slate-200 hover:border-slate-300 rounded-lg px-3.5 py-2 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  placeholder="Basic Coffee, dll..."
+                />
               </div>
-              <div className="flex gap-3 pt-3">
-                <button type="button" onClick={() => setShowModal(false)}
-                  className="flex-1 border border-slate-200 text-slate-600 font-semibold py-2.5 rounded-2xl text-xs hover:bg-slate-50 transition-all">
-                  Batal
-                </button>
-                <button type="submit"
-                  className="flex-1 bg-[#3B4CB8] text-white font-bold py-2.5 rounded-2xl text-xs hover:bg-[#3241A3] transition-all shadow-md shadow-indigo-100">
-                  {editing ? "Simpan Perubahan" : "Tambah Menu"}
-                </button>
+
+              {/* Deskripsi */}
+              <div className="col-span-2">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5 block" htmlFor="menu_desc">
+                  Deskripsi *
+                </label>
+                <textarea
+                  id="menu_desc"
+                  required
+                  value={form.description}
+                  onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                  className="w-full text-sm bg-white border border-slate-200 hover:border-slate-300 rounded-lg px-3.5 py-2 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all resize-none h-16"
+                  placeholder="Deskripsi menu..."
+                  rows={2}
+                />
+              </div>
+
+              {/* Gambar */}
+              <div className="col-span-2">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5 block" htmlFor="menu_image">
+                  Path / URL Gambar
+                </label>
+                <input
+                  id="menu_image"
+                  value={form.image}
+                  onChange={e => setForm(f => ({ ...f, image: e.target.value }))}
+                  className="w-full text-sm bg-white border border-slate-200 hover:border-slate-300 rounded-lg px-3.5 py-2 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  placeholder="/assets/Menu/nama-gambar.jpg"
+                />
               </div>
             </form>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 mt-3">
+              <button
+                type="button"
+                onClick={() => setShowModal(false)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                form="menu-form"
+                type="submit"
+                className="px-5 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-xs cursor-pointer"
+              >
+                Save
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* Delete Confirm */}
       {deleteConfirm && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-sm w-full text-center shadow-xl border border-slate-100">
-            <div className="w-12 h-12 rounded-2xl bg-rose-50 flex items-center justify-center mx-auto mb-3">
-              <span className="material-symbols-outlined text-rose-500 text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>delete</span>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white w-full max-w-sm rounded-xl border border-slate-200 shadow-xl overflow-hidden animate-scale-up">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+              <h2 className="text-slate-800 font-bold text-lg">Hapus Menu?</h2>
+              <button onClick={() => setDeleteConfirm(null)} className="text-slate-400 hover:text-slate-700 transition-colors p-1.5 rounded-full hover:bg-slate-100">
+                <span className="material-symbols-outlined">close</span>
+              </button>
             </div>
-            <h3 className="text-slate-800 font-bold text-base mb-1">Hapus Menu?</h3>
-            <p className="text-slate-400 text-xs mb-6">Tindakan ini tidak dapat dibatalkan.</p>
-            <div className="flex gap-3">
-              <button onClick={() => setDeleteConfirm(null)} className="flex-1 border border-slate-200 text-slate-600 font-semibold py-2.5 rounded-2xl text-xs hover:bg-slate-50 transition-all">Batal</button>
-              <button onClick={() => handleDelete(deleteConfirm)} className="flex-1 bg-rose-500 text-white font-bold py-2.5 rounded-2xl text-xs hover:bg-rose-600 transition-all shadow-md shadow-rose-100">Hapus</button>
+            <div className="px-6 py-5">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center flex-shrink-0">
+                  <span className="material-symbols-outlined text-red-500" style={{ fontVariationSettings: "'FILL' 1" }}>delete</span>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-700 mb-1">Konfirmasi Hapus</p>
+                  <p className="text-sm text-slate-500 leading-relaxed">Tindakan ini tidak dapat dibatalkan.</p>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 bg-slate-50 rounded-b-xl">
+              <button onClick={() => setDeleteConfirm(null)}
+                className="text-sm font-semibold px-5 py-2.5 rounded-lg bg-white text-slate-600 border border-slate-200 hover:bg-slate-100 transition-colors">
+                Batal
+              </button>
+              <button onClick={() => handleDelete(deleteConfirm)}
+                className="text-sm font-semibold px-5 py-2.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors shadow-sm">
+                Ya, Hapus
+              </button>
             </div>
           </div>
         </div>
       )}
+
+
     </div>
   );
 }

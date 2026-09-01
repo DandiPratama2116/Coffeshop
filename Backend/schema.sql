@@ -93,7 +93,6 @@ CREATE TABLE reservations (
   id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
   customer_name VARCHAR(80) NOT NULL,
   customer_email VARCHAR(191) NOT NULL,
-  customer_phone VARCHAR(30) NULL,
   table_id BIGINT UNSIGNED NOT NULL,
   reservation_date DATE NOT NULL,
   reservation_time TIME NOT NULL,

@@ -187,22 +187,71 @@ func SeedDummyData(db *gorm.DB) error {
 		db.Save(&p)
 	}
 
-	// ── Location & Tables ────────────────────────────────────────────
-	var locCount int64
-	db.Model(&internal.Location{}).Count(&locCount)
-	if locCount == 0 {
-		loc := internal.Location{NamaTempat: "Coffee Shop Norma", Keterangan: "Lantai 1"}
-		db.Create(&loc)
+	// ── Location & Tables (Denah 4 Area: VIP, Indoor, Smoking, Outdoor) ──
+	var loc internal.Location
+	if err := db.First(&loc).Error; err == nil && loc.ID > 0 {
+		desiredTables := []struct {
+			num      uint
+			area     string
+			capacity uint
+		}{
+			// 1. VIP (4 meja: 6, 10, 10, 8 kursi)
+			{101, "VIP", 6},
+			{102, "VIP", 10},
+			{103, "VIP", 10},
+			{104, "VIP", 8},
 
-		tables := []internal.Table{
-			{TableNumber: 1, LocationID: loc.ID, SeatingArea: "Indoor", Status: "available"},
-			{TableNumber: 2, LocationID: loc.ID, SeatingArea: "Indoor", Status: "available"},
-			{TableNumber: 3, LocationID: loc.ID, SeatingArea: "Outdoor", Status: "available"},
-			{TableNumber: 4, LocationID: loc.ID, SeatingArea: "Indoor", Status: "available"},
-			{TableNumber: 5, LocationID: loc.ID, SeatingArea: "Outdoor", Status: "available"},
+			// 2. Indoor (8 meja: 2, 4, 4, 6, 4, 2, 6, 4 kursi)
+			{1, "Indoor", 2},
+			{2, "Indoor", 4},
+			{3, "Indoor", 4},
+			{4, "Indoor", 6},
+			{5, "Indoor", 4},
+			{6, "Indoor", 2},
+			{7, "Indoor", 6},
+			{8, "Indoor", 4},
+
+			// 3. Room Smoking (8 meja: 2, 4, 4, 6, 2, 4, 6, 4 kursi)
+			{201, "Room Smoking", 2},
+			{202, "Room Smoking", 4},
+			{203, "Room Smoking", 4},
+			{204, "Room Smoking", 6},
+			{205, "Room Smoking", 2},
+			{206, "Room Smoking", 4},
+			{207, "Room Smoking", 6},
+			{208, "Room Smoking", 4},
+
+			// 4. Outdoor (Sesuai denah denahlokasicoffeshop.jpeg)
+			{301, "Outdoor", 2},
+			{302, "Outdoor", 3},
+			{303, "Outdoor", 4},
+			{304, "Outdoor", 6},
+			{305, "Outdoor", 2},
+			{306, "Outdoor", 6},
+			{307, "Outdoor", 7},
+			{308, "Outdoor", 12},
+			{309, "Outdoor", 8},
+			{310, "Outdoor", 10},
+			{311, "Outdoor", 4},
+			{312, "Outdoor", 12},
 		}
-		for _, t := range tables {
-			db.Create(&t)
+
+		for _, dt := range desiredTables {
+			var existing internal.Table
+			if err := db.Where("table_number = ?", dt.num).First(&existing).Error; err != nil {
+				db.Create(&internal.Table{
+					TableNumber: dt.num,
+					LocationID:  loc.ID,
+					SeatingArea: dt.area,
+					Capacity:    dt.capacity,
+					Status:      "available",
+				})
+			} else {
+				db.Model(&existing).Updates(map[string]interface{}{
+					"seating_area": dt.area,
+					"capacity":     dt.capacity,
+				})
+			}
 		}
 	}
 

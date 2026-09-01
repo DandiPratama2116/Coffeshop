@@ -7,6 +7,7 @@ type Table struct {
 	TableNumber  uint          `gorm:"not null" json:"table_number"`
 	LocationID   uint          `gorm:"not null;index" json:"location_id"`
 	SeatingArea  string        `gorm:"size:40;not null;default:'Indoor'" json:"seating_area"`
+	Capacity     uint          `gorm:"not null;default:4" json:"capacity"`
 	Status       string        `gorm:"size:20;not null;default:'available'" json:"status"`
 	Location     Location      `gorm:"foreignKey:LocationID" json:"location,omitempty"`
 	Reservations []Reservation `gorm:"foreignKey:TableID" json:"reservations,omitempty"`

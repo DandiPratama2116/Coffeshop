@@ -26,6 +26,13 @@ export default function OrderView({ tableId }: OrderViewProps) {
   const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 
   useEffect(() => {
+    const savedName = localStorage.getItem('order_customerName');
+    const savedStep = localStorage.getItem('order_step');
+    if (savedName) setCustomerName(savedName);
+    if (savedStep === 'menu') setStep('menu');
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
     fetch(`${apiBase}/customer/tables/number/${encodeURIComponent(tableId)}`)
       .then(response => response.ok ? response.json() : Promise.reject(new Error('Meja tidak ditemukan')))
@@ -46,10 +53,35 @@ export default function OrderView({ tableId }: OrderViewProps) {
     return () => { cancelled = true; };
   }, [apiBase, tableId]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (tableStatus !== 'available') return;
-    setStep('menu');
+    if (tableStatus === 'loading' || tableStatus === 'missing') return;
+    
+    try {
+      const response = await fetch(`${apiBase}/customer/customers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nama: customerName,
+          meja: tableNumber,
+          lokasi_duduk: seatingArea
+        })
+      });
+      if (!response.ok) {
+        throw new Error('Gagal mendaftarkan nama pemesan ke database');
+      }
+      const result = await response.json();
+      const customer = result.data;
+      if (customer && customer.id) {
+        localStorage.setItem('order_customerId', String(customer.id));
+      }
+      
+      localStorage.setItem('order_customerName', customerName);
+      localStorage.setItem('order_step', 'menu');
+      setStep('menu');
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : 'Gagal terhubung ke database untuk menyimpan nama');
+    }
   };
 
   if (step === 'menu') {
@@ -60,7 +92,11 @@ export default function OrderView({ tableId }: OrderViewProps) {
           tableNumber={tableNumber}
           tableDatabaseId={tableDatabaseId}
           seatingArea={seatingArea}
-          onBack={() => setStep('form')}
+          onBack={() => {
+            localStorage.removeItem('order_step');
+            localStorage.removeItem('order_customerId');
+            setStep('form');
+          }}
         />
       </div>
     );
@@ -151,8 +187,8 @@ export default function OrderView({ tableId }: OrderViewProps) {
           <div className="pt-6">
             <button
               type="submit"
-              disabled={tableStatus !== 'available'}
-              aria-disabled={tableStatus !== 'available'}
+              disabled={tableStatus === 'loading' || tableStatus === 'missing'}
+              aria-disabled={tableStatus === 'loading' || tableStatus === 'missing'}
               className="w-full relative overflow-hidden bg-[#5c4d42] text-white font-bold italic py-4 px-4 rounded-2xl shadow-xl shadow-[#5c4d42]/30 hover:shadow-2xl hover:bg-[#4a3d34] transform active:scale-[0.98] transition-all duration-300 group"
             >
               <span className="relative z-10 text-[#fdfdfc] flex items-center justify-center gap-2">

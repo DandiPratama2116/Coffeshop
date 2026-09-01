@@ -37,6 +37,22 @@ func (c *TableController) GetAll(ctx *gin.Context) {
 	})
 }
 
+func (c *TableController) GetSummary(ctx *gin.Context) {
+	data, err := c.service.GetSummary()
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"message": err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    data,
+	})
+}
+
 func (c *TableController) GetByID(ctx *gin.Context) {
 	id, err := strconv.ParseUint(ctx.Param("id"), 10, 64)
 

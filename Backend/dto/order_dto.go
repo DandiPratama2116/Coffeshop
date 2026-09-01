@@ -6,10 +6,13 @@ type CreateOrderItemRequest struct {
 }
 
 type CreateOrderRequest struct {
-	CustomerID    uint                     `json:"customer_id"`
-	CustomerName  string                   `json:"customer_name"`
-	TableID       uint                     `json:"table_id" binding:"required"`
-	Items         []CreateOrderItemRequest `json:"items" binding:"required,min=1"`
+	CustomerID     uint                     `json:"customer_id"`
+	CustomerName   string                   `json:"customer_name"`
+	TableID        uint                     `json:"table_id" binding:"required"`
+	PromoCode      string                   `json:"promo_code"`
+	PromoID        *uint                    `json:"promo_id"`
+	DiscountAmount float64                  `json:"discount_amount"`
+	Items          []CreateOrderItemRequest `json:"items" binding:"required,min=1"`
 }
 
 type UpdateOrderStatusRequest struct {

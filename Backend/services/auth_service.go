@@ -57,17 +57,14 @@ func (s *authService) Login(req dto.LoginRequest) (*dto.LoginResponse, error) {
 func (s *authService) Logout(sessionID string) error {
 	now := time.Now()
 
-	// Update kolom logout_at pada baris session yang aktif (logout_at masih NULL)
-	result := s.db.Model(&internal.AdminSession{}).
-		Where("id = ? AND logout_at IS NULL", sessionID).
-		Update("logout_at", &now)
-
-	if result.Error != nil {
-		return result.Error
+	query := s.db.Model(&internal.AdminSession{}).Where("logout_at IS NULL")
+	if sessionID != "" {
+		query = query.Where("id = ?", sessionID)
 	}
 
-	if result.RowsAffected == 0 {
-		return errors.New("session tidak ditemukan atau sudah logout")
+	result := query.Update("logout_at", &now)
+	if result.Error != nil {
+		return result.Error
 	}
 
 	return nil

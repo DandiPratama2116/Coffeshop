@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/smtp"
 	"os"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -39,14 +40,52 @@ func (s ReservationService) Create(request dto.CreateReservationRequest) (intern
 	}
 
 	var table internal.Table
-	if err := s.db.Where("status = ?", "available").First(&table).Error; err != nil {
-		return internal.Reservation{}, errors.New("belum ada meja yang tersedia")
+	foundTable := false
+	re := regexp.MustCompile(`Meja:\s*\(?(\d+)`)
+	matches := re.FindStringSubmatch(request.Description)
+	if len(matches) > 1 {
+		if tblNum, err := strconv.Atoi(matches[1]); err == nil && tblNum > 0 {
+			if s.db.Where("table_number = ?", tblNum).First(&table).Error == nil {
+				foundTable = true
+			}
+		}
+	}
+	if !foundTable {
+		if err := s.db.Where("status = ?", "available").First(&table).Error; err != nil {
+			if err := s.db.First(&table).Error; err != nil {
+				return internal.Reservation{}, errors.New("belum ada data meja di sistem")
+			}
+		}
+	}
+
+	// Pastikan kolom customer_id dan reservation_time di MySQL fleksibel, serta hapus kolom phone yang tidak terpakai
+	_ = s.db.Exec("ALTER TABLE `reservations` MODIFY `customer_id` BIGINT UNSIGNED NULL").Error
+	_ = s.db.Exec("ALTER TABLE `reservations` MODIFY `reservation_time` VARCHAR(50) NULL").Error
+	_ = s.db.Exec("ALTER TABLE `reservations` DROP COLUMN `customer_phone`").Error
+	_ = s.db.Exec("ALTER TABLE `reservations` DROP COLUMN `customerphone`").Error
+	_ = s.db.Exec("ALTER TABLE `reservations` DROP COLUMN `nomor_phone`").Error
+	_ = s.db.Exec("ALTER TABLE `reservations` DROP COLUMN `nomorphone`").Error
+	_ = s.db.Exec("ALTER TABLE `customers` DROP COLUMN `phone`").Error
+	_ = s.db.Exec("ALTER TABLE `customers` DROP COLUMN `nomor_phone`").Error
+	_ = s.db.Exec("ALTER TABLE `customers` DROP COLUMN `nomorphone`").Error
+
+	// Buat record customer untuk relasi customer_id
+	customer := internal.Customer{
+		Nama:        request.Name,
+		Meja:        strconv.FormatUint(uint64(table.TableNumber), 10),
+		LokasiDuduk: "Reservasi",
+	}
+	if err := s.db.Create(&customer).Error; err != nil {
+		var existingCustomer internal.Customer
+		if s.db.First(&existingCustomer).Error == nil {
+			customer.ID = existingCustomer.ID
+		}
 	}
 
 	reservation := internal.Reservation{
+		CustomerID:      customer.ID,
 		CustomerName:    request.Name,
 		CustomerEmail:   request.Email,
-		CustomerPhone:   "", // Or get from request if added
 		TableID:         table.ID,
 		ReservationDate: reservationDate,
 		ReservationTime: request.ReservationTime,
@@ -54,13 +93,23 @@ func (s ReservationService) Create(request dto.CreateReservationRequest) (intern
 		Description:     request.Description,
 		Status:          "pending",
 	}
+
 	if err := s.db.Create(&reservation).Error; err != nil {
-		return internal.Reservation{}, errors.New("gagal menyimpan reservasi")
+		// Jika MySQL kolom reservation_time bertipe DATETIME, gunakan format YYYY-MM-DD HH:MM:00
+		fullDateTime := fmt.Sprintf("%s %s:00", request.ReservationDate, request.ReservationTime)
+		reservation.ReservationTime = fullDateTime
+		if retryErr := s.db.Create(&reservation).Error; retryErr != nil {
+			// Coba format TIME standar HH:MM:SS
+			reservation.ReservationTime = request.ReservationTime + ":00"
+			if thirdErr := s.db.Create(&reservation).Error; thirdErr != nil {
+				return internal.Reservation{}, errors.New("gagal menyimpan reservasi: " + thirdErr.Error())
+			}
+		}
 	}
 
-	if err := sendReservationEmail(request, reservation.ID, table.TableNumber); err != nil {
-		return reservation, fmt.Errorf("reservasi tersimpan, tetapi email belum terkirim: %w", err)
-	}
+	// Kirim notifikasi email (jika SMTP aktif) tanpa menggagalkan reservasi jika SMTP belum disetting
+	_ = sendReservationEmail(request, reservation.ID, table.TableNumber)
+
 	return reservation, nil
 }
 

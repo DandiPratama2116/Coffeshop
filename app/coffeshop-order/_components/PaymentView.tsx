@@ -14,11 +14,14 @@ interface PaymentViewProps {
   customerName: string;
   tableId: number;
   cart: CartItem[];
+  promoCode?: string;
+  promoId?: number;
+  discountAmount?: number;
   onBack: () => void;
   onPaySuccess: (orderId: number) => void;
 }
 
-export default function PaymentView({ totalAmount, customerName, tableId, cart, onBack, onPaySuccess }: PaymentViewProps) {
+export default function PaymentView({ totalAmount, customerName, tableId, cart, promoCode, promoId, discountAmount, onBack, onPaySuccess }: PaymentViewProps) {
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -49,10 +52,27 @@ export default function PaymentView({ totalAmount, customerName, tableId, cart, 
     if (!selectedMethod) return;
     setIsProcessing(true);
     try {
+      const customerId = Number(localStorage.getItem('order_customerId')) || 0;
+      const promoCartItem = cart.find(c => c.item.category === 'Promo');
+      const calculatedDiscount = discountAmount || (promoCartItem && promoCartItem.item.originalPrice && promoCartItem.item.originalPrice > promoCartItem.item.price ? (promoCartItem.item.originalPrice - promoCartItem.item.price) * promoCartItem.quantity : 0);
+
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'}/customer/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customer_id: 0, customer_name: customerName, table_id: tableId, items: cart.map(({ item, quantity }) => ({ menu_id: Number(item.id.replace(/\D/g, '')) || 1, quantity })) }),
+        body: JSON.stringify({
+          customer_id: customerId,
+          customer_name: customerName,
+          table_id: tableId,
+          total_amount: totalAmount,
+          promo_code: promoCode || '',
+          promo_id: promoId || (promoCartItem ? Number(promoCartItem.item.id.replace(/\D/g, '')) || undefined : undefined),
+          discount_amount: calculatedDiscount,
+          notes: '',
+          items: cart.map(c => ({
+            menu_id: Number(c.item.id.replace(/\D/g, '')) || 1,
+            quantity: c.quantity
+          }))
+        }),
       });
       const result = await response.json();
       console.log("Create order result:", result);

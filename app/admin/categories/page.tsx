@@ -159,108 +159,117 @@ export default function AdminCategoriesPage() {
 
       {/* Modal Add / Edit */}
       {showModal && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-sm shadow-xl overflow-hidden border border-slate-100">
-            <div className="px-6 py-4 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-slate-800 font-bold text-base">
-                {editing ? "Edit Kategori" : "Tambah Kategori"}
-              </h2>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white rounded-xl w-full max-w-[480px] border border-slate-200 shadow-xl overflow-hidden animate-scale-up">
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 pt-5 pb-3">
+              <h2 className="text-lg font-bold text-slate-800 tracking-tight">{editing ? "Edit Kategori" : "Tambah Kategori"}</h2>
               <button
+                type="button"
                 onClick={() => setShowModal(false)}
-                className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700 transition-colors"
+                className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-md hover:bg-slate-100 cursor-pointer"
               >
-                <span className="material-symbols-outlined text-sm">close</span>
+                <span className="material-symbols-outlined text-lg">close</span>
               </button>
             </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+
+            {/* Body */}
+            <form onSubmit={handleSubmit} id="category-form" className="px-6 py-2 space-y-4">
               {!editing && (
                 <div>
-                  <label className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1.5 block">
-                    ID Kategori
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5 block" htmlFor="cat_id">
+                    ID Kategori *
                   </label>
                   <input
+                    id="cat_id"
                     required
                     value={form.id}
                     onChange={(e) => setForm((f) => ({ ...f, id: e.target.value }))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-slate-800 text-sm focus:outline-none focus:border-[#3B4CB8] focus:bg-white transition-all"
+                    className="w-full text-sm bg-white border border-slate-200 hover:border-slate-300 rounded-lg px-3.5 py-2 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                     placeholder="Misal: Coffee"
                   />
                 </div>
               )}
+
               <div>
-                <label className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1.5 block">
-                  Label
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5 block" htmlFor="cat_label">
+                  Label Kategori *
                 </label>
                 <input
+                  id="cat_label"
                   required
                   value={form.label}
                   onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-slate-800 text-sm focus:outline-none focus:border-[#3B4CB8] focus:bg-white transition-all"
+                  className="w-full text-sm bg-white border border-slate-200 hover:border-slate-300 rounded-lg px-3.5 py-2 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                   placeholder="Nama kategori lengkap"
                 />
               </div>
+
               <div>
-                <label className="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1.5 block">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5 block" htmlFor="cat_short">
                   Short Label
                 </label>
                 <input
+                  id="cat_short"
                   value={form.shortLabel}
                   onChange={(e) => setForm((f) => ({ ...f, shortLabel: e.target.value }))}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 text-slate-800 text-sm focus:outline-none focus:border-[#3B4CB8] focus:bg-white transition-all"
+                  className="w-full text-sm bg-white border border-slate-200 hover:border-slate-300 rounded-lg px-3.5 py-2 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
                   placeholder="Nama pendek untuk tab"
                 />
               </div>
-              <div className="flex gap-3 pt-3">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="flex-1 border border-slate-200 text-slate-600 font-semibold py-2.5 rounded-2xl text-xs hover:bg-slate-50 transition-all"
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 bg-[#3B4CB8] text-white font-bold py-2.5 rounded-2xl text-xs hover:bg-[#3241A3] transition-all shadow-md shadow-indigo-100"
-                >
-                  {editing ? "Simpan" : "Tambah"}
-                </button>
-              </div>
             </form>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 mt-3">
+              <button
+                type="button"
+                onClick={() => setShowModal(false)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                form="category-form"
+                type="submit"
+                className="px-5 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-xs cursor-pointer"
+              >
+                Save
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* Delete Confirmation Modal */}
       {deleteConfirm && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-sm w-full text-center shadow-xl border border-slate-100">
-            <div className="w-12 h-12 rounded-2xl bg-rose-50 flex items-center justify-center mx-auto mb-3">
-              <span
-                className="material-symbols-outlined text-rose-500 text-2xl"
-                style={{ fontVariationSettings: "'FILL' 1" }}
-              >
-                delete
-              </span>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-50 flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white w-full max-w-sm rounded-xl border border-slate-200 shadow-xl overflow-hidden animate-scale-up">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+              <h2 className="text-slate-800 font-bold text-lg">Hapus Kategori?</h2>
+              <button onClick={() => setDeleteConfirm(null)} className="text-slate-400 hover:text-slate-700 transition-colors p-1.5 rounded-full hover:bg-slate-100">
+                <span className="material-symbols-outlined">close</span>
+              </button>
             </div>
-            <h3 className="text-slate-800 font-bold text-base mb-1">Hapus Kategori?</h3>
-            <p className="text-slate-400 text-xs mb-6">
-              Item menu dalam kategori ini tidak akan ikut terhapus dari sistem.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setDeleteConfirm(null)}
-                className="flex-1 border border-slate-200 text-slate-600 font-semibold py-2.5 rounded-2xl text-xs hover:bg-slate-50 transition-all"
-              >
+            <div className="px-6 py-5">
+              <div className="flex items-start gap-4">
+                <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center flex-shrink-0">
+                  <span className="material-symbols-outlined text-red-500" style={{ fontVariationSettings: "'FILL' 1" }}>delete</span>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-700 mb-1">Konfirmasi Hapus</p>
+                  <p className="text-sm text-slate-500 leading-relaxed">Item menu dalam kategori ini tidak akan ikut terhapus dari sistem.</p>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 bg-slate-50 rounded-b-xl">
+              <button onClick={() => setDeleteConfirm(null)}
+                className="text-sm font-semibold px-5 py-2.5 rounded-lg bg-white text-slate-600 border border-slate-200 hover:bg-slate-100 transition-colors">
                 Batal
               </button>
-              <button
-                onClick={() => {
-                  save(categories.filter((c) => c.id !== deleteConfirm));
-                  setDeleteConfirm(null);
-                }}
-                className="flex-1 bg-rose-500 text-white font-bold py-2.5 rounded-2xl text-xs hover:bg-rose-600 transition-all shadow-md shadow-rose-100"
-              >
-                Hapus
+              <button onClick={() => { save(categories.filter((c) => c.id !== deleteConfirm)); setDeleteConfirm(null); }}
+                className="text-sm font-semibold px-5 py-2.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors shadow-sm">
+                Ya, Hapus
               </button>
             </div>
           </div>

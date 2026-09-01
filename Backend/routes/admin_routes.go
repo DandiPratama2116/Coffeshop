@@ -7,12 +7,16 @@ import (
 )
 
 // RegisterAdminRoutes registers endpoints used by the admin panel.
-func RegisterAdminRoutes(group *gin.RouterGroup, auth *controllers.AuthController, dashboard *controllers.DashboardController, products *controllers.ProductController, categories *controllers.CategoryController, tables *controllers.TableController, orders *controllers.OrderController, payments *controllers.PaymentController, reports *controllers.ReportController, reservations *controllers.ReservationController) {
+func RegisterAdminRoutes(group *gin.RouterGroup, auth *controllers.AuthController, dashboard *controllers.DashboardController, products *controllers.ProductController, categories *controllers.CategoryController, tables *controllers.TableController, orders *controllers.OrderController, payments *controllers.PaymentController, reports *controllers.ReportController, reservations *controllers.ReservationController, settings *controllers.SettingController, promos controllers.PromoController) {
 	admin := group.Group("/admin")
 
 	admin.POST("/login", auth.Login)
 	admin.POST("/logout", auth.Logout)
+	admin.POST("/Logout", auth.Logout)
 	admin.GET("/dashboard", dashboard.GetDashboard)
+
+	admin.GET("/settings", settings.GetSettings)
+	admin.PUT("/settings", settings.UpdateSettings)
 
 	admin.GET("/products", products.GetAll)
 	admin.GET("/products/:id", products.GetByID)
@@ -27,6 +31,7 @@ func RegisterAdminRoutes(group *gin.RouterGroup, auth *controllers.AuthControlle
 	admin.DELETE("/categories/:id", categories.Delete)
 
 	admin.GET("/tables", tables.GetAll)
+	admin.GET("/tables/summary", tables.GetSummary)
 	admin.GET("/tables/:id", tables.GetByID)
 	admin.POST("/tables", tables.Create)
 	admin.PUT("/tables/:id", tables.Update)
@@ -47,4 +52,10 @@ func RegisterAdminRoutes(group *gin.RouterGroup, auth *controllers.AuthControlle
 
 	admin.GET("/reservations", reservations.GetAll)
 	admin.PATCH("/reservations/:id/status", reservations.UpdateStatus)
+
+	admin.GET("/promos", promos.GetAllPromos)
+	admin.GET("/promos/:id", promos.GetPromoByCode) 
+	admin.POST("/promos", promos.CreatePromo)
+	admin.PUT("/promos/:id", promos.UpdatePromo)
+	admin.DELETE("/promos/:id", promos.DeletePromo)
 }

@@ -58,72 +58,147 @@ export default function OrderMenu({ customerName, tableNumber, tableDatabaseId, 
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [promoCode, setPromoCode] = useState('');
   const [appliedPromo, setAppliedPromo] = useState(false);
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [promos, setPromos] = useState<any[]>([]);
+  const [activePromoIndex, setActivePromoIndex] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Load from localStorage on mount
   useEffect(() => {
+    const savedCart = localStorage.getItem('order_cart');
+    const savedView = localStorage.getItem('order_currentView');
+    const savedOrderId = localStorage.getItem('order_createdOrderId');
+    if (savedCart) {
+      try {
+        setCart(JSON.parse(savedCart));
+      } catch (e) {}
+    }
+    if (savedOrderId && Number(savedOrderId) > 0) {
+      setCreatedOrderId(Number(savedOrderId));
+    }
+    if (savedView === 'cart' || savedView === 'payment' || savedView === 'waiting') {
+      setCurrentView(savedView);
+    }
+  }, []);
+
+  // Save to localStorage whenever cart changes
+  useEffect(() => {
+    localStorage.setItem('order_cart', JSON.stringify(cart));
+  }, [cart]);
+
+  // Save view state
+  useEffect(() => {
+    localStorage.setItem('order_currentView', currentView);
+  }, [currentView]);
+
+  // Save createdOrderId state
+  useEffect(() => {
+    if (createdOrderId && createdOrderId > 0) {
+      localStorage.setItem('order_createdOrderId', String(createdOrderId));
+    }
+  }, [createdOrderId]);
+
+  useEffect(() => {
+    if (promos.length <= 1) return;
     const interval = setInterval(() => {
       if (scrollRef.current) {
         const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
         if (scrollLeft + clientWidth >= scrollWidth - 10) {
-          // Reset to start
           scrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+          setActivePromoIndex(0);
         } else {
-          // Scroll to next
-          scrollRef.current.scrollTo({ left: scrollLeft + clientWidth, behavior: 'smooth' });
+          const nextLeft = scrollLeft + clientWidth;
+          scrollRef.current.scrollTo({ left: nextLeft, behavior: 'smooth' });
+          setActivePromoIndex(Math.round(nextLeft / (clientWidth || 1)));
         }
       }
-    }, 4000); // Auto slide every 4 seconds
+    }, 4500);
 
     return () => clearInterval(interval);
+  }, [promos.length]);
+
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'}/customer/promos`)
+      .then(res => {
+        if (!res.ok) return null;
+        return res.json();
+      })
+      .then(json => {
+        if (json && json.success && Array.isArray(json.data)) {
+          // Filter only active promos
+          const activePromos = json.data.filter((p: any) => p && p.active);
+          setPromos(activePromos);
+        } else {
+          setPromos([]);
+        }
+      })
+      .catch(() => {
+        // Fallback gracefully without throwing Next.js error overlay
+        setPromos([]);
+      });
   }, []);
 
-  const PROMOS = [
-    {
-      id: 1,
-      title: "Buy 2\nGet a Free Cookie !",
-      image: "/assets/Menu/CoffeMagic.jpeg",
-      gradient: "from-[#8c7b70] to-[#a3948b]",
-      code: "FREECOOKIE",
-      item: {
-        id: 'promo-1',
-        name: 'Promo: 2 Coffee + Free Cookie',
-        description: 'Paket Buy 2 Selected Coffee + 1 Free Choco Tiramisu Cookies.',
-        price: 89000,
-        category: 'Promo',
-        subCategory: 'Promo'
-      }
-    },
-    {
-      id: 2,
-      title: "Special\nDiscount 20%",
-      image: "/assets/Menu/Sweet&Cream.jpeg",
-      gradient: "from-[#b5a397] to-[#cbbdb3]",
-      code: "DISC20",
-      item: {
-        id: 'promo-2',
-        name: 'Promo: Sweet & Cream (20% OFF)',
-        description: 'Special Discount 20% untuk menu signature Sweet & Cream.',
-        price: 37000,
-        category: 'Promo',
-        subCategory: 'Promo'
-      }
-    },
-    {
-      id: 3,
-      title: "New Arrival\nPistachio Matcha",
-      image: "/assets/Menu/MatchaPistachio.jpeg",
-      gradient: "from-[#8a9a86] to-[#a2b29e]",
-      code: "MATCHA15",
-      item: {
-        id: 'promo-3',
-        name: 'Promo: Pistachio Matcha',
-        description: 'New Arrival! Pistachio Matcha dengan harga spesial.',
-        price: 55000,
-        category: 'Rekomendasi',
-        subCategory: 'Rekomendasi'
-      }
+  const resolveImageSrc = (src?: string | null) => {
+    if (!src) return '/assets/coffe/Espresso.jpg';
+    if (src.startsWith('http') || src.startsWith('/')) return src;
+    return `/assets/Menu/${src}`;
+  };
+
+  const getPromoDetails = (promo: any) => {
+    if (!promo) {
+      return {
+        linked: undefined,
+        name: 'Promo',
+        image: '/assets/coffe/Espresso.jpg',
+        originalPrice: 0,
+        discountedPrice: 0,
+      };
     }
-  ];
+    const allMenus = menuItems.length > 0 ? menuItems : MENU_ITEMS;
+    const linked = allMenus.find(m => m && String(m.id) === String(promo.product_id));
+
+    const rawImage = promo.product?.image || linked?.image;
+    const image = resolveImageSrc(rawImage);
+    const name = promo.product?.nama_menu || linked?.name || promo.name || 'Promo Menu';
+    const originalPrice = linked?.price || promo.product?.harga || 0;
+
+    let discountedPrice = originalPrice;
+    if (promo.type === 'percentage' || promo.type === 'percent') {
+      discountedPrice = Math.max(0, Math.round(originalPrice * (1 - (Number(promo.discount) || 0) / 100)));
+    } else if (promo.discount) {
+      discountedPrice = Math.max(0, originalPrice - Number(promo.discount));
+    }
+
+    return {
+      linked,
+      name,
+      image,
+      originalPrice,
+      discountedPrice,
+    };
+  };
+
+  const handleUsePromo = (promo: any) => {
+    const { linked, name, image, originalPrice, discountedPrice } = getPromoDetails(promo);
+    const finalPrice = discountedPrice > 0 ? discountedPrice : (originalPrice > 0 ? originalPrice : 20000);
+
+    const promoItem: MenuItem = {
+      id: promo.product_id ? String(promo.product_id) : `promo-${promo.id}`,
+      name: name,
+      price: finalPrice,
+      originalPrice: originalPrice > 0 ? originalPrice : undefined,
+      category: 'Promo',
+      image: image,
+      description: promo.description || linked?.description || 'Menu Promo Spesial',
+    };
+
+    addToCart(promoItem);
+    if (promo.code) {
+      setPromoCode(promo.code);
+      setAppliedPromo(true);
+    }
+    setCurrentView('cart');
+  };
 
   const getCategoryIconSrc = (id: string) => {
     switch (id) {
@@ -145,6 +220,24 @@ export default function OrderMenu({ customerName, tableNumber, tableDatabaseId, 
   const filteredMenu = activeCategory === 'All'
     ? (menuItems.length > 0 ? menuItems : MENU_ITEMS)
     : (menuItems.length > 0 ? menuItems : MENU_ITEMS).filter(item => item.category === activeCategory);
+
+  const processedMenu = filteredMenu.map(item => {
+    const promo = (promos || []).find(p => p && p.product_id && String(p.product_id) === item.id);
+    if (promo) {
+      let calcDiscount = 0;
+      if (promo.type === 'fixed') {
+        calcDiscount = Number(promo.discount) || 0;
+      } else {
+        calcDiscount = item.price * ((Number(promo.discount) || 0) / 100);
+      }
+      return {
+        ...item,
+        originalPrice: item.price,
+        price: Math.max(0, item.price - calcDiscount),
+      };
+    }
+    return item;
+  });
 
   const addToCart = (item: MenuItem) => {
     setCart(prev => {
@@ -171,10 +264,6 @@ export default function OrderMenu({ customerName, tableNumber, tableDatabaseId, 
       <CartView
         cart={cart}
         setCart={setCart}
-        promoCode={promoCode}
-        setPromoCode={setPromoCode}
-        appliedPromo={appliedPromo}
-        setAppliedPromo={setAppliedPromo}
         onBack={() => setCurrentView('menu')}
         onCheckout={() => setCurrentView('payment')}
       />
@@ -184,14 +273,21 @@ export default function OrderMenu({ customerName, tableNumber, tableDatabaseId, 
   if (currentView === 'payment') {
     return (
       <PaymentView
-        totalAmount={totalPrice}
+        totalAmount={totalPrice + 2500 + 2000} 
         customerName={customerName}
         tableId={tableDatabaseId}
         cart={cart}
+        promoCode={promoCode}
         onBack={() => setCurrentView('cart')}
         onPaySuccess={(orderId) => {
           setCart([]);
-          setCreatedOrderId(orderId);
+          localStorage.removeItem('order_cart');
+          localStorage.removeItem('order_customerId');
+          if (orderId && orderId > 0) {
+            setCreatedOrderId(orderId);
+            localStorage.setItem('order_createdOrderId', String(orderId));
+          }
+          localStorage.setItem('order_currentView', 'waiting');
           setCurrentView('waiting');
         }}
       />
@@ -202,8 +298,12 @@ export default function OrderMenu({ customerName, tableNumber, tableDatabaseId, 
     return (
       <WaitingView
         orderId={createdOrderId}
+        tableDatabaseId={tableDatabaseId}
+        tableNumber={tableNumber}
         onBackToMenu={() => {
           setCreatedOrderId(null);
+          localStorage.removeItem('order_createdOrderId');
+          localStorage.removeItem('order_currentView');
           setCurrentView('menu');
         }}
       />
@@ -211,21 +311,35 @@ export default function OrderMenu({ customerName, tableNumber, tableDatabaseId, 
   }
 
   return (
-    <div className="min-h-screen bg-[#fcfbf9] flex flex-col pb-24 relative">
-
-      {/* Top Header Icons */}
-      <div className="px-5 pt-6 pb-2 flex items-center justify-between">
-        <button onClick={onBack} className="text-[#8c7b70] hover:text-[#5c4d42] transition-colors p-1">
-          <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
+    <div className="min-h-screen bg-[#fafafa] flex flex-col pb-28">
+      {/* Top App Bar */}
+      <div className="px-5 pt-6 pb-4 flex items-center justify-between sticky top-0 bg-[#fafafa]/90 backdrop-blur-md z-20 border-b border-stone-200/50">
+        <button
+          onClick={onBack}
+          className="w-9 h-9 rounded-full bg-white border border-[#edeae6] flex items-center justify-center text-stone-700 shadow-sm active:scale-95 transition-transform"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <button onClick={() => setCurrentView('cart')} className="relative p-1">
-          <div className="relative w-7 h-7">
-            <Image src="/assets/keranjang.png" alt="Cart" fill className="object-contain" />
-          </div>
+
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+          <span className="text-xs font-bold text-stone-700 tracking-wide">Meja {tableNumber}</span>
+          <span className="text-stone-300">•</span>
+          <span className="text-xs text-stone-500">{seatingArea}</span>
+        </div>
+
+        {/* Cart Icon with badge */}
+        <button
+          onClick={() => setCurrentView('cart')}
+          className="w-9 h-9 rounded-full bg-[#7a6a60] flex items-center justify-center text-white relative shadow-md shadow-[#7a6a60]/20 active:scale-95 transition-transform"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+          </svg>
           {totalItems > 0 && (
-            <span className="absolute -top-1 -right-1 bg-[#d32f2f] text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full border-2 border-[#fcfbf9]">
+            <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center animate-scale-up shadow-sm">
               {totalItems}
             </span>
           )}
@@ -233,53 +347,163 @@ export default function OrderMenu({ customerName, tableNumber, tableDatabaseId, 
       </div>
 
       {/* Greeting Title */}
-      <div className="px-5 mb-5">
+      <div className="px-5 my-4 w-full max-w-3xl mx-auto">
         <p className="text-xs font-semibold text-[#a3948b] uppercase tracking-widest mb-0.5">{greeting} 👋</p>
         <h1 className="text-[22px] font-extrabold text-stone-900 leading-tight">{customerName}</h1>
         <p className="text-[13px] text-[#b5a89e] mt-0.5">Selamat datang di Coffee Shop</p>
-        <div className="flex items-center gap-2 mt-3">
-          <span className="text-[11px] font-semibold bg-[#f4f1eb] text-[#7a6a60] px-3 py-1.5 rounded-full border border-[#edeae6]">🪑 Meja {tableNumber}</span>
-          <span className="text-[11px] font-semibold bg-[#f4f1eb] text-[#7a6a60] px-3 py-1.5 rounded-full border border-[#edeae6]">{seatingArea}</span>
-        </div>
       </div>
 
-      {/* Promo Banner */}
-      <div className="mb-8 w-full overflow-hidden">
-        <div
-          ref={scrollRef}
-          className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide w-full"
-        >
-          {PROMOS.map((promo) => (
-            <div key={promo.id} className="min-w-full px-5 snap-center">
-              <div className={`bg-gradient-to-r ${promo.gradient} rounded-3xl p-6 relative overflow-hidden shadow-lg shadow-black/5`}>
-                {/* Decorative circles */}
-                <div className="absolute -top-10 -left-10 w-32 h-32 rounded-full border border-white/20"></div>
-                <div className="absolute top-10 left-10 w-24 h-24 rounded-full border border-white/10"></div>
+      {/* Promo Banner - Responsive across Mobile (Android/iOS), Tablet & Desktop */}
+      {promos.length > 0 && (
+        <div className="px-5 mb-6 w-full max-w-3xl mx-auto">
+          <div className="relative">
+            <div
+              ref={scrollRef}
+              className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide w-full rounded-3xl"
+              onScroll={(e) => {
+                const el = e.currentTarget;
+                const idx = Math.round(el.scrollLeft / (el.clientWidth || 1));
+                setActivePromoIndex(idx);
+              }}
+            >
+              {promos.map((promo, index) => {
+                const { name, image, originalPrice, discountedPrice } = getPromoDetails(promo);
+                
+                // Variasi tema premium
+                const themes = [
+                  {
+                    gradient: "from-[#2b1810] via-[#3d2419] to-[#1c0f0a]",
+                    badgeBg: "bg-amber-400 text-stone-950",
+                    accentGlow: "bg-amber-500/20",
+                    btnBg: "bg-amber-500 hover:bg-amber-400 text-stone-950",
+                  },
+                  {
+                    gradient: "from-[#1e2a22] via-[#2d3e33] to-[#141d17]",
+                    badgeBg: "bg-emerald-400 text-stone-950",
+                    accentGlow: "bg-emerald-500/20",
+                    btnBg: "bg-emerald-500 hover:bg-emerald-400 text-stone-950",
+                  },
+                  {
+                    gradient: "from-[#2a1b2d] via-[#3c2741] to-[#1b101d]",
+                    badgeBg: "bg-rose-400 text-stone-950",
+                    accentGlow: "bg-rose-500/20",
+                    btnBg: "bg-rose-500 hover:bg-rose-400 text-white",
+                  }
+                ];
+                const theme = themes[index % themes.length];
+                const discountText = promo.type === 'percentage' || promo.type === 'percent'
+                  ? `HEMAT ${promo.discount}%`
+                  : `HEMAT Rp ${Number(promo.discount).toLocaleString('id-ID')}`;
 
-                <div className="relative z-10 w-2/3">
-                  <h2 className="text-white font-bold text-lg leading-tight mb-1 whitespace-pre-line">{promo.title}</h2>
-                  <button
-                    onClick={() => {
-                      addToCart(promo.item as MenuItem);
-                      setPromoCode(promo.code);
-                      setAppliedPromo(true);
-                      setCurrentView('cart');
-                    }}
-                    className="mt-3 bg-white text-stone-900 text-xs font-bold px-4 py-2 rounded-full hover:bg-stone-100 transition-colors w-max shadow-sm active:scale-95"
-                  >
-                    Order Now
-                  </button>
-                </div>
+                return (
+                  <div key={promo.id} className="min-w-full snap-center">
+                    <div className={`relative overflow-hidden rounded-3xl bg-gradient-to-br ${theme.gradient} p-4 sm:p-6 text-white shadow-xl shadow-stone-950/15 border border-white/10`}>
+                      
+                      {/* Glow dekoratif */}
+                      <div className={`absolute -right-10 -bottom-10 w-44 h-44 rounded-full ${theme.accentGlow} blur-3xl pointer-events-none`}></div>
+                      <div className="absolute top-0 right-1/4 w-32 h-32 rounded-full bg-white/5 blur-2xl pointer-events-none"></div>
 
-                {/* Images overlapping on right */}
-                <div className="absolute -right-4 -bottom-4 w-32 h-32 rounded-full overflow-hidden shadow-xl rotate-[-10deg]">
-                  <Image src={promo.image} alt="Promo" fill className="object-cover" />
-                </div>
-              </div>
+                      <div className="relative z-10 flex items-center justify-between gap-3 sm:gap-6">
+                        {/* Info Promo (Kiri) */}
+                        <div className="flex-1 min-w-0 pr-1 sm:pr-2">
+                          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                            <span className={`inline-flex items-center gap-1 text-[10px] sm:text-xs font-black tracking-wider uppercase px-2.5 py-0.5 rounded-full ${theme.badgeBg} shadow-sm`}>
+                              🏷️ {discountText}
+                            </span>
+                            {promo.code && (
+                              <span className="text-[10px] sm:text-xs font-mono font-bold bg-white/15 px-2 py-0.5 rounded-md border border-white/20 text-white/90">
+                                {promo.code}
+                              </span>
+                            )}
+                          </div>
+
+                          <h2 className="text-white font-extrabold text-base sm:text-xl leading-tight line-clamp-1">
+                            {promo.name}
+                          </h2>
+
+                          <p className="text-amber-200/90 font-medium text-xs sm:text-sm mt-0.5 line-clamp-1">
+                            {name}
+                          </p>
+
+                          {promo.description && (
+                            <p className="text-white/70 text-[11px] sm:text-xs mt-1 line-clamp-2 leading-relaxed">
+                              {promo.description}
+                            </p>
+                          )}
+
+                          {/* Harga & Tombol */}
+                          <div className="mt-3 flex flex-wrap items-center gap-2 sm:gap-3 pt-2 border-t border-white/10">
+                            {originalPrice > 0 && (
+                              <div className="flex items-baseline gap-1.5">
+                                <span className="text-white font-black text-sm sm:text-base">
+                                  Rp {discountedPrice.toLocaleString('id-ID')}
+                                </span>
+                                {originalPrice > discountedPrice && (
+                                  <span className="text-[11px] text-white/50 line-through">
+                                    Rp {originalPrice.toLocaleString('id-ID')}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={() => handleUsePromo(promo)}
+                              className={`${theme.btnBg} font-extrabold text-xs sm:text-sm px-4 sm:px-5 py-2 sm:py-2.5 rounded-full transition-all shadow-md active:scale-95 flex items-center gap-1.5 cursor-pointer ml-auto`}
+                            >
+                              <span>Gunakan Promo</span>
+                              <span className="text-sm">→</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Foto Menu Terpilih (Kanan) */}
+                        <div className="shrink-0 relative">
+                          <div className="w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-2xl overflow-hidden relative shadow-lg shadow-black/30 border-2 border-white/20 bg-stone-900/60">
+                            <Image
+                              src={image}
+                              alt={name}
+                              fill
+                              sizes="(max-width: 640px) 80px, 128px"
+                              className="object-cover hover:scale-105 transition-transform duration-300"
+                            />
+                          </div>
+                          <div className="absolute -bottom-1.5 -left-1.5 bg-black/80 backdrop-blur-xs text-[9px] sm:text-[10px] font-bold text-amber-300 px-2 py-0.5 rounded-full border border-white/10 shadow-xs">
+                            Menu Promo
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          ))}
+
+            {/* Dot Indicators jika promo > 1 */}
+            {promos.length > 1 && (
+              <div className="flex items-center justify-center gap-1.5 mt-2.5">
+                {promos.map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => {
+                      if (scrollRef.current) {
+                        const width = scrollRef.current.clientWidth;
+                        scrollRef.current.scrollTo({ left: width * i, behavior: 'smooth' });
+                      }
+                      setActivePromoIndex(i);
+                    }}
+                    className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                      activePromoIndex === i ? "w-6 bg-amber-600" : "w-1.5 bg-stone-300"
+                    }`}
+                    aria-label={`Slide promo ${i + 1}`}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Categories */}
       <div className="px-5 mb-5 w-full max-w-3xl mx-auto">
@@ -322,7 +546,7 @@ export default function OrderMenu({ customerName, tableNumber, tableDatabaseId, 
       {/* Menu Grid */}
       <div className="px-5 pb-32 flex flex-col gap-10">
         {Object.entries(
-          filteredMenu.reduce((acc, item) => {
+          processedMenu.reduce((acc, item) => {
             const group = item.subCategory || 'Other';
             if (!acc[group]) acc[group] = [];
             acc[group].push(item);
@@ -363,7 +587,12 @@ export default function OrderMenu({ customerName, tableNumber, tableDatabaseId, 
                       {item.description}
                     </p>
                     <div className="pt-2 flex items-center justify-between border-t border-[#edeae6]/60 mt-auto">
-                      <span className="font-extrabold text-stone-800 text-[13px]">Rp {item.price.toLocaleString('id-ID')}</span>
+                      <div className="flex flex-col">
+                        {item.originalPrice && (
+                          <span className="text-[10px] text-red-500 line-through">Rp {item.originalPrice.toLocaleString('id-ID')}</span>
+                        )}
+                        <span className="font-extrabold text-stone-800 text-[13px]">Rp {item.price.toLocaleString('id-ID')}</span>
+                      </div>
                       <button
                         onClick={() => addToCart(item)}
                         className="bg-[#5c4d42] text-white w-8 h-8 rounded-full flex items-center justify-center active:scale-95 shadow-sm shrink-0 hover:bg-[#4a3d34] transition-colors"
@@ -451,9 +680,14 @@ export default function OrderMenu({ customerName, tableNumber, tableDatabaseId, 
             <div className="p-6 flex-1 overflow-y-auto">
               <div className="flex justify-between items-start gap-4 mb-2">
                 <h2 className="text-xl font-bold text-stone-900">{selectedItem.name}</h2>
-                <span className="text-lg font-bold text-stone-800 shrink-0">
-                  Rp {selectedItem.price.toLocaleString('id-ID')}
-                </span>
+                <div className="flex flex-col items-end">
+                  {selectedItem.originalPrice && (
+                    <span className="text-sm text-red-500 line-through">Rp {selectedItem.originalPrice.toLocaleString('id-ID')}</span>
+                  )}
+                  <span className="text-lg font-bold text-stone-800 shrink-0">
+                    Rp {selectedItem.price.toLocaleString('id-ID')}
+                  </span>
+                </div>
               </div>
               <p className="text-sm text-[#8c7b70] font-medium mb-6 leading-relaxed">
                 {selectedItem.description}

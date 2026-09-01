@@ -1,4 +1,71 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
 export default function Footer() {
+  const [settings, setSettings] = useState({
+    operationalHours: [
+      { day: "Senin", open: "09:00", close: "22:00", isClosed: false },
+      { day: "Selasa", open: "09:00", close: "22:00", isClosed: false },
+      { day: "Rabu", open: "09:00", close: "22:00", isClosed: false },
+      { day: "Kamis", open: "09:00", close: "22:00", isClosed: false },
+      { day: "Jumat", open: "09:00", close: "22:00", isClosed: false },
+      { day: "Sabtu", open: "09:00", close: "22:00", isClosed: false },
+      { day: "Minggu", open: "09:00", close: "22:00", isClosed: false },
+    ],
+    address: "Jl. Alamat Demo No. 123, Kota Demo, Provinsi Demo 12345",
+    isOpen: true,
+  });
+
+  useEffect(() => {
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+    fetch(`${apiBase}/customer/settings`)
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then(result => {
+        if (result.success && result.data) {
+          setSettings({
+            operationalHours: result.data.operational_hours ? (typeof result.data.operational_hours === 'string' ? JSON.parse(result.data.operational_hours) : result.data.operational_hours) : [
+                { day: "Senin", open: "09:00", close: "22:00", isClosed: false },
+                { day: "Selasa", open: "09:00", close: "22:00", isClosed: false },
+                { day: "Rabu", open: "09:00", close: "22:00", isClosed: false },
+                { day: "Kamis", open: "09:00", close: "22:00", isClosed: false },
+                { day: "Jumat", open: "09:00", close: "22:00", isClosed: false },
+                { day: "Sabtu", open: "09:00", close: "22:00", isClosed: false },
+                { day: "Minggu", open: "09:00", close: "22:00", isClosed: false },
+            ],
+            address: result.data.address || "Jl. Alamat Demo No. 123, Kota Demo, Provinsi Demo 12345",
+            isOpen: result.data.is_open !== undefined ? result.data.is_open : true,
+          });
+        }
+      })
+      .catch(() => {
+        // Fallback localStorage
+        if (typeof window !== "undefined") {
+          const s = localStorage.getItem("admin_settings");
+          if (s) {
+            try {
+              const p = JSON.parse(s);
+              setSettings({
+                operationalHours: p.operationalHours || [
+                  { day: "Senin", open: "09:00", close: "22:00", isClosed: false },
+                  { day: "Selasa", open: "09:00", close: "22:00", isClosed: false },
+                  { day: "Rabu", open: "09:00", close: "22:00", isClosed: false },
+                  { day: "Kamis", open: "09:00", close: "22:00", isClosed: false },
+                  { day: "Jumat", open: "09:00", close: "22:00", isClosed: false },
+                  { day: "Sabtu", open: "09:00", close: "22:00", isClosed: false },
+                  { day: "Minggu", open: "09:00", close: "22:00", isClosed: false },
+                ],
+                address: p.address || "Jl. Alamat Demo No. 123, Kota Demo, Provinsi Demo 12345",
+                isOpen: p.isOpen !== undefined ? p.isOpen : true,
+              });
+            } catch (e) {
+              console.error(e);
+            }
+          }
+        }
+      });
+  }, []);
+
   return (
     <footer
       className="bg-[#0a0f1c] border-t border-white/5 w-full pt-24 pb-8 px-margin-mobile md:px-margin-desktop relative overflow-hidden"
@@ -85,23 +152,21 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Location & Hours */}
+          {/* Location */}
           <div className="md:col-span-3 lg:col-span-3">
             <h4 className="font-headline-md text-lg text-white mb-6 uppercase tracking-widest flex items-center gap-2 drop-shadow-sm">
-              <span className="w-8 h-[2px] bg-white/30"></span> Kunjungi
+              <span className="w-8 h-[2px] bg-white/30"></span> Lokasi
             </h4>
             
-            <div className="space-y-6">
-              <div
-                className="flex gap-4 items-start group cursor-default"
-              >
-                <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0 group-hover:bg-white/20 transition-all duration-300">
-                  <span className="material-symbols-outlined text-white/80 group-hover:text-white transition-colors duration-300">
+            <div className="space-y-4">
+              <div className="flex gap-3 items-start group cursor-default">
+                <div className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0 group-hover:bg-white/20 transition-all duration-300">
+                  <span className="material-symbols-outlined text-white/80 group-hover:text-white text-lg transition-colors duration-300">
                     location_on
                   </span>
                 </div>
-                <address className="font-body-md text-white/60 group-hover:text-white transition-colors duration-300 not-italic leading-relaxed pt-1">
-                  Jl. Alamat Demo No. 123, Kota Demo, Provinsi Demo 12345
+                <address className="font-body-md text-white/60 group-hover:text-white transition-colors duration-300 not-italic leading-relaxed text-xs pt-0.5">
+                  {settings.address}
                 </address>
               </div>
             </div>

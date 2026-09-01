@@ -50,14 +50,7 @@ func (c *AuthController) Login(ctx *gin.Context) {
 func (c *AuthController) Logout(ctx *gin.Context) {
 	var request dto.LogoutRequest
 
-	if err := ctx.ShouldBindJSON(&request); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"message": "Session ID wajib diisi",
-			"error":   err.Error(),
-		})
-		return
-	}
+	_ = ctx.ShouldBindJSON(&request)
 
 	if err := c.service.Logout(request.SessionID); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
