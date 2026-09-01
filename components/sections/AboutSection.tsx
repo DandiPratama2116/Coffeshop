@@ -1,7 +1,56 @@
+"use client";
+import { useEffect, useState } from 'react';
 // @ts-ignore
 import FoldText from '../ui/FoldText';
 
 export default function AboutSection() {
+  const [settings, setSettings] = useState({
+    openTime: "09.00",
+    closeTime: "22.00",
+    openDays: "Senin - Minggu",
+    operationalHours: [
+      { day: "Senin", open: "09:00", close: "22:00", isClosed: false },
+      { day: "Selasa", open: "09:00", close: "22:00", isClosed: false },
+      { day: "Rabu", open: "09:00", close: "22:00", isClosed: false },
+      { day: "Kamis", open: "09:00", close: "22:00", isClosed: false },
+      { day: "Jumat", open: "09:00", close: "22:00", isClosed: false },
+      { day: "Sabtu", open: "09:00", close: "22:00", isClosed: false },
+      { day: "Minggu", open: "09:00", close: "22:00", isClosed: false },
+    ]
+  });
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+        let res = await fetch(`${apiBase}/customer/settings`);
+        if (!res.ok) res = await fetch(`${apiBase}/admin/settings`);
+        if (res.ok) {
+          const result = await res.json();
+          if (result.success && result.data) {
+            setSettings({
+              openTime: (result.data.open_time || "09:00").replace(":", "."),
+              closeTime: (result.data.close_time || "22:00").replace(":", "."),
+              openDays: result.data.open_days || "Senin - Minggu",
+              operationalHours: result.data.operational_hours ? (typeof result.data.operational_hours === 'string' ? JSON.parse(result.data.operational_hours) : result.data.operational_hours) : [
+                { day: "Senin", open: "09:00", close: "22:00", isClosed: false },
+                { day: "Selasa", open: "09:00", close: "22:00", isClosed: false },
+                { day: "Rabu", open: "09:00", close: "22:00", isClosed: false },
+                { day: "Kamis", open: "09:00", close: "22:00", isClosed: false },
+                { day: "Jumat", open: "09:00", close: "22:00", isClosed: false },
+                { day: "Sabtu", open: "09:00", close: "22:00", isClosed: false },
+                { day: "Minggu", open: "09:00", close: "22:00", isClosed: false },
+              ]
+            });
+          }
+        }
+      } catch (e) {
+        console.error("Gagal memuat pengaturan operasional", e);
+      }
+    };
+    fetchSettings();
+  }, []);
+
   return (
     <section id="about" className="relative py-24 px-margin-mobile md:px-margin-desktop bg-surface pb-32">
       <div className="max-w-container-max mx-auto">
@@ -116,10 +165,12 @@ export default function AboutSection() {
             </div>
 
             <ul className="flex flex-col text-base font-body-lg max-w-md mx-auto relative z-10">
-              {['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'].map((day) => (
-                <li key={day} className="group/item flex justify-between items-center py-4 border-b border-outline/40 last:border-0 hover:px-4 hover:bg-surface-variant/30 rounded-xl transition-all duration-300 -mx-4 px-4">
-                  <span className="text-on-surface-variant group-hover/item:text-primary transition-colors">{day}</span>
-                  <span className="text-on-surface font-semibold tracking-wider group-hover/item:text-primary transition-colors">09.00 – 22.00</span>
+              {settings.operationalHours.map((schedule: any) => (
+                <li key={schedule.day} className="group/item flex justify-between items-center py-4 border-b border-outline/40 last:border-0 hover:px-4 hover:bg-surface-variant/30 rounded-xl transition-all duration-300 -mx-4 px-4">
+                  <span className="text-on-surface-variant group-hover/item:text-primary transition-colors">{schedule.day}</span>
+                  <span className={`text-on-surface font-semibold tracking-wider transition-colors ${schedule.isClosed ? 'text-red-500 group-hover/item:text-red-600' : 'group-hover/item:text-primary'}`}>
+                    {schedule.isClosed ? 'Tutup' : `${schedule.open.replace(":", ".")} - ${schedule.close.replace(":", ".")}`}
+                  </span>
                 </li>
               ))}
             </ul>

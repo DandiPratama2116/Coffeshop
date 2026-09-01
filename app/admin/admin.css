@@ -1,0 +1,161 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+/* Global Variables for Admin Theme */
+:root {
+  --admin-font-primary: 'Poppins', sans-serif;
+  --admin-font-secondary: 'Poppins', sans-serif;
+  --admin-sidebar-bg: #1e2a2e;
+  --admin-bg-light: #f5f6f8;
+  --admin-accent: #2d4744;
+  --admin-accent-glow: rgba(45, 71, 68, 0.3);
+}
+
+.admin-shell,
+.admin-shell *:not(.material-symbols-outlined) {
+  font-family: var(--admin-font-primary);
+}
+
+.admin-shell .font-inter {
+  font-family: var(--admin-font-secondary);
+}
+
+.admin-shell .material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+}
+
+/* Base Body Styles */
+.admin-shell {
+  background-color: var(--admin-bg-light);
+  color: #334155; /* Slate 700 */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Glassmorphism Utilities */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 12px 40px 0 rgba(15, 23, 42, 0.04);
+}
+
+.glass-header {
+  background: rgba(248, 250, 252, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.6);
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.02);
+}
+
+/* Custom Scrollbar */
+.admin-shell ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.admin-shell ::-webkit-scrollbar-track {
+  background: transparent;
+}
+.admin-shell ::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 999px;
+}
+.admin-shell ::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.6);
+}
+
+/* Subtle Entry Animations */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.stagger-1 { animation-delay: 100ms; }
+.stagger-2 { animation-delay: 200ms; }
+.stagger-3 { animation-delay: 300ms; }
+.stagger-4 { animation-delay: 400ms; }
+
+/* Sidebar Nav Links */
+.sidebar-nav-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 16px;
+  font-size: 13.5px;
+  font-weight: 500;
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: none;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.15s ease;
+  margin-right: 12px;
+  letter-spacing: 0.02em;
+}
+
+.sidebar-nav-link:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.sidebar-nav-link:active {
+  transform: scale(0.96);
+}
+
+.sidebar-nav-link:focus {
+  outline: none;
+}
+
+.sidebar-nav-link.active {
+  border-radius: 14px 0 0 14px;
+  width: calc(100% + 1px);
+  margin-right: -1px;
+  color: #2a3c3a;
+  background: #e4e0d8;
+  font-weight: 700;
+  overflow: visible;
+}
+
+/* Concave corner - TOP RIGHT */
+.sidebar-nav-link.active::before {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: -14px;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+  z-index: 20;
+  background: radial-gradient(circle at 0 100%, transparent 14px, #e4e0d8 14px);
+}
+
+/* Concave corner - BOTTOM RIGHT */
+.sidebar-nav-link.active::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: -14px;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+  z-index: 20;
+  background: radial-gradient(circle at 0 0, transparent 14px, #e4e0d8 14px);
+}
+
+/* Micro-interactions */
+.hover-lift {
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.hover-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 10px 10px -5px rgba(15, 23, 42, 0.03);
+}

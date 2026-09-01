@@ -7,33 +7,16 @@ import { MenuItem } from '../_data/menuData';
 interface CartViewProps {
   cart: { item: MenuItem; quantity: number }[];
   setCart: React.Dispatch<React.SetStateAction<{ item: MenuItem; quantity: number }[]>>;
-  promoCode: string;
-  setPromoCode: (code: string) => void;
-  appliedPromo: boolean;
-  setAppliedPromo: (applied: boolean) => void;
   onBack: () => void;
   onCheckout: () => void;
 }
 
-export default function CartView({ cart, setCart, promoCode, setPromoCode, appliedPromo, setAppliedPromo, onBack, onCheckout }: CartViewProps) {
+export default function CartView({ cart, setCart, onBack, onCheckout }: CartViewProps) {
   const subTotal = cart.reduce((acc, curr) => acc + (curr.item.price * curr.quantity), 0);
   const deliveryFee = 2500;
   const adminFee = 2000;
   
-  let discount = 0;
-  if (appliedPromo) {
-    if (promoCode === 'FREECOOKIE') {
-      discount = 25000;
-    } else if (promoCode === 'DISC20') {
-      discount = 7400; // 20% from 37.000
-    } else if (promoCode === 'MATCHA15') {
-      discount = 10000;
-    } else {
-      discount = subTotal * 0.1; // fallback
-    }
-  }
-  
-  const total = subTotal - discount + deliveryFee + adminFee;
+  const total = subTotal + deliveryFee + adminFee;
 
   const updateQuantity = (id: string, delta: number) => {
     setCart(prev => {
@@ -54,11 +37,6 @@ export default function CartView({ cart, setCart, promoCode, setPromoCode, appli
     setCart(prev => prev.filter(cartItem => cartItem.item.id !== id));
   };
 
-  const handleApplyPromo = () => {
-    if (promoCode.trim().length > 0) {
-      setAppliedPromo(true);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-[#fafafa] flex flex-col  pb-24">
@@ -111,12 +89,22 @@ export default function CartView({ cart, setCart, promoCode, setPromoCode, appli
                     </div>
 
                     <div className="flex justify-between items-end mt-auto pt-2">
-                      <span className="font-bold text-stone-600 text-sm">
-                        Rp {(item.price * quantity).toLocaleString('id-ID')}
-                      </span>
+                      <div className="flex flex-col">
+                        {item.originalPrice && item.originalPrice > item.price && (
+                          <span className="text-[11px] text-stone-400 line-through">
+                            Rp {(item.originalPrice * quantity).toLocaleString('id-ID')}
+                          </span>
+                        )}
+                        <span className="font-bold text-stone-700 text-sm">
+                          Rp {(item.price * quantity).toLocaleString('id-ID')}
+                        </span>
+                      </div>
                       
                       {item.category === 'Promo' ? (
-                        <div className="flex items-center h-7 pr-2">
+                        <div className="flex items-center h-7">
+                          <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                            Promo Digunakan (1x)
+                          </span>
                         </div>
                       ) : (
                         <div className="flex items-center gap-3">
@@ -151,25 +139,6 @@ export default function CartView({ cart, setCart, promoCode, setPromoCode, appli
           Tambah Pesanan
         </button>
 
-        {/* Discount Coupon */}
-        <h2 className="text-stone-800 font-bold text-sm mb-3">Kode Diskon</h2>
-        <div className="flex gap-2 mb-8">
-          <input
-            type="text"
-            placeholder="Masukkan Kode Diskon"
-            value={promoCode}
-            onChange={(e) => setPromoCode(e.target.value)}
-            disabled={appliedPromo}
-            className="flex-1 bg-white border border-stone-200 rounded-xl px-4 py-3 text-sm text-stone-800 placeholder:text-stone-400 focus:outline-none focus:border-amber-500 disabled:bg-green-50 disabled:text-green-600 disabled:font-bold disabled:border-green-200"
-          />
-          <button
-            onClick={handleApplyPromo}
-            disabled={appliedPromo || !promoCode.trim()}
-            className="bg-amber-600 text-white font-bold px-6 py-3 rounded-xl active:bg-amber-700 transition-colors disabled:opacity-50"
-          >
-            {appliedPromo ? 'Applied' : 'Apply'}
-          </button>
-        </div>
 
         {/* Summary */}
         <div className="space-y-3 mb-8 text-sm">
@@ -177,12 +146,7 @@ export default function CartView({ cart, setCart, promoCode, setPromoCode, appli
             <span>Sub total</span>
             <span>Rp {subTotal.toLocaleString('id-ID')}</span>
           </div>
-          {appliedPromo && (
-            <div className="flex justify-between text-green-600 font-medium">
-              <span>Promo: {promoCode}</span>
-              <span>- Rp {discount.toLocaleString('id-ID')}</span>
-            </div>
-          )}
+
           <div className="flex justify-between text-stone-600 font-medium">
             <span>Biaya Layanan</span>
             <span>Rp {deliveryFee.toLocaleString('id-ID')}</span>
