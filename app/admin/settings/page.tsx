@@ -143,6 +143,45 @@ export default function AdminSettingsPage() {
     { id: "payment" as const, label: "Pembayaran & Pajak", icon: "payments" },
   ];
 
+  // Hitung status buka/tutup toko saat ini (Sinkron 100% dengan Dashboard & Jadwal Operasional)
+  const daysMap: { [key: number]: string } = {
+    0: "Minggu",
+    1: "Senin",
+    2: "Selasa",
+    3: "Rabu",
+    4: "Kamis",
+    5: "Jumat",
+    6: "Sabtu",
+  };
+  const todayName = daysMap[new Date().getDay()];
+  const todaySchedule = settings.operationalHours?.find((h) => h.day === todayName);
+
+  const isStoreCurrentlyOpen = (() => {
+    if (!settings.isOpen) return false;
+    try {
+      if (todaySchedule && todaySchedule.isClosed) return false;
+
+      const openTimeStr = todaySchedule ? todaySchedule.open : settings.openTime;
+      const closeTimeStr = todaySchedule ? todaySchedule.close : settings.closeTime;
+
+      const now = new Date();
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      const [openH, openM] = (openTimeStr || "08:00").split(":").map(Number);
+      const [closeH, closeM] = (closeTimeStr || "22:00").split(":").map(Number);
+      const openMinutes = openH * 60 + openM;
+      const closeMinutes = closeH * 60 + closeM;
+
+      if (closeMinutes > openMinutes) {
+        return currentMinutes >= openMinutes && currentMinutes <= closeMinutes;
+      } else {
+        // Toko buka melewati tengah malam
+        return currentMinutes >= openMinutes || currentMinutes <= closeMinutes;
+      }
+    } catch {
+      return settings.isOpen;
+    }
+  })();
+
   const handleApplyToAllDays = (sourceOpen: string, sourceClose: string) => {
     const updated = settings.operationalHours.map(d => ({
       ...d,
@@ -165,12 +204,12 @@ export default function AdminSettingsPage() {
             <div className="flex items-center gap-2.5">
               <h1 className="text-2xl font-black text-slate-800 tracking-tight">Pengaturan Sistem</h1>
               <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                settings.isOpen
+                isStoreCurrentlyOpen
                   ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                   : "bg-rose-50 text-rose-700 border border-rose-200"
               }`}>
-                <span className={`w-2 h-2 rounded-full ${settings.isOpen ? "bg-emerald-500 animate-pulse" : "bg-rose-500"}`}></span>
-                {settings.isOpen ? "Toko Buka" : "Toko Tutup"}
+                <span className={`w-2 h-2 rounded-full ${isStoreCurrentlyOpen ? "bg-emerald-500 animate-pulse" : "bg-rose-500"}`}></span>
+                {isStoreCurrentlyOpen ? "Sedang Buka" : "Sedang Tutup"}
               </span>
             </div>
             <p className="text-slate-500 text-xs mt-0.5">
@@ -368,38 +407,74 @@ export default function AdminSettingsPage() {
         {/* TAB 2: JAM OPERASIONAL */}
         {activeTab === "hours" && (
           <div className="space-y-6">
-            {/* Status Buka / Tutup Utama */}
-            <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3.5">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
-                  settings.isOpen ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
-                }`}>
+            {/* Status Buka / Tutup Utama (Sinkron dengan Jadwal Operasional & Dashboard) */}
+            <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+              <div className="flex items-start gap-4">
+                <div
+                  className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 mt-0.5 ${
+                    isStoreCurrentlyOpen ? "bg-emerald-50 text-emerald-600 border border-emerald-200" : "bg-rose-50 text-rose-600 border border-rose-200"
+                  }`}
+                >
                   <span className="material-symbols-outlined text-2xl">
-                    {settings.isOpen ? "storefront" : "door_front"}
+                    {isStoreCurrentlyOpen ? "storefront" : "door_front"}
                   </span>
                 </div>
                 <div>
-                  <h3 className="text-slate-800 font-bold text-base">Status Operasional Cafe</h3>
-                  <p className="text-slate-400 text-xs mt-0.5">
-                    {settings.isOpen
-                      ? "Saat ini toko aktif menerima reservasi dan pesanan pelanggan"
-                      : "Saat ini toko sedang dinonaktifkan sementara (tutup)"}
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    <h3 className="text-slate-900 font-bold text-base">Status Operasional Cafe</h3>
+                    <span
+                      className={`px-3 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wider flex items-center gap-1.5 ${
+                        isStoreCurrentlyOpen
+                          ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                          : "bg-rose-100 text-rose-800 border border-rose-300"
+                      }`}
+                    >
+                      <span className={`w-2 h-2 rounded-full ${isStoreCurrentlyOpen ? "bg-emerald-500 animate-pulse" : "bg-rose-500"}`}></span>
+                      {isStoreCurrentlyOpen ? "Sedang Buka" : "Sedang Tutup"}
+                    </span>
+                  </div>
+
+                  <p className="text-slate-500 text-xs mt-1 leading-relaxed">
+                    {isStoreCurrentlyOpen ? (
+                      <span>
+                        Sesuai jadwal hari <strong className="text-slate-800 font-semibold">{todayName}</strong> ({todaySchedule ? `${todaySchedule.open} – ${todaySchedule.close} WIB` : `${settings.openTime} – ${settings.closeTime} WIB`}), cafe saat ini sedang beroperasi dan melayani pesanan.
+                      </span>
+                    ) : !settings.isOpen ? (
+                      <span className="text-rose-600 font-medium">
+                        Cafe ditutup secara manual melalui Saklar Utama di samping.
+                      </span>
+                    ) : todaySchedule?.isClosed ? (
+                      <span>
+                        Hari ini (<strong className="text-slate-800 font-semibold">{todayName}</strong>) dijadwalkan sebagai hari libur / tutup reguler.
+                      </span>
+                    ) : (
+                      <span>
+                        Saat ini di luar jam operasional hari <strong className="text-slate-800 font-semibold">{todayName}</strong> (Jadwal buka: {todaySchedule ? `${todaySchedule.open} – ${todaySchedule.close} WIB` : `${settings.openTime} – ${settings.closeTime} WIB`}).
+                      </span>
+                    )}
                   </p>
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setSettings(s => ({ ...s, isOpen: !s.isOpen }))}
-                className={`px-5 py-2.5 rounded-2xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
-                  settings.isOpen
-                    ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/20"
-                    : "bg-slate-200 text-slate-700 hover:bg-slate-300"
-                }`}
-              >
-                <span className={`w-2 h-2 rounded-full ${settings.isOpen ? "bg-white animate-pulse" : "bg-slate-500"}`}></span>
-                {settings.isOpen ? "Toko Sedang BUKA" : "Toko Sedang TUTUP"}
-              </button>
+              {/* Saklar Master Manual */}
+              <div className="flex flex-col sm:items-end gap-1.5 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-100 shrink-0">
+                <span className="text-[11px] font-semibold text-slate-500">Saklar Utama Toko:</span>
+                <button
+                  type="button"
+                  onClick={() => setSettings((s) => ({ ...s, isOpen: !s.isOpen }))}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+                    settings.isOpen
+                      ? "bg-slate-900 text-white shadow-xs hover:bg-slate-800"
+                      : "bg-rose-600 text-white shadow-xs hover:bg-rose-700"
+                  }`}
+                  title={settings.isOpen ? "Klik untuk menonaktifkan toko sementara" : "Klik untuk mengaktifkan toko"}
+                >
+                  <span className="material-symbols-outlined text-sm">
+                    {settings.isOpen ? "check_circle" : "do_not_disturb_on"}
+                  </span>
+                  {settings.isOpen ? "Layanan Aktif (Otomatis Sesuai Jam)" : "Ditutup Manual (Tutup Paksa)"}
+                </button>
+              </div>
             </div>
 
             {/* Jadwal Harian Grid */}
@@ -572,11 +647,19 @@ export default function AdminSettingsPage() {
                   </p>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 text-slate-600 text-xs leading-relaxed flex items-start gap-2.5">
-                  <span className="material-symbols-outlined text-indigo-500 text-base shrink-0 mt-0.5">info</span>
-                  <p>
-                    Setiap penyesuaian pajak akan otomatis diterapkan pada kalkulasi kasir dan pesanan baru tanpa perlu restart server.
-                  </p>
+                <div className="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100 text-slate-700 text-xs leading-relaxed flex items-start gap-2.5">
+                  <span className="material-symbols-outlined text-indigo-600 text-base shrink-0 mt-0.5">calculate</span>
+                  <div>
+                    <p className="font-semibold text-slate-800">Sinkronisasi Pajak Pembayaran Pelanggan:</p>
+                    <p className="text-slate-500 mt-0.5">
+                      Besaran pajak yang Anda atur ({settings.taxPercent || 0}%) akan langsung diterapkan pada rincian keranjang dan total tagihan pembayaran pelanggan di menu pemesanan QR.
+                    </p>
+                    {Number(settings.taxPercent) > 0 && (
+                      <p className="text-indigo-700 font-bold mt-1 text-[11px]">
+                        Contoh: Pesanan Rp 50.000 ➔ Pajak ({settings.taxPercent}%): Rp {((50000 * Number(settings.taxPercent)) / 100).toLocaleString("id-ID")}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

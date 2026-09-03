@@ -28,7 +28,7 @@ interface TableHotspot {
   description: string;
 }
 
-const BLUEPRINT_TABLES: TableHotspot[] = [
+const BLUEPRINT_TABLES_L1: TableHotspot[] = [
   // ── 1. ZONA VIP ROOM (4 MEJA: 6, 10, 10, 8 KURSI) ──
   { number: 101, code: "VIP 1", area: "VIP", x: 39.3, y: 25.5, w: 5.6, h: 14.0, capacity: 6, shape: "rect", description: "Meja VIP 1 (6 Kursi)" },
   { number: 102, code: "VIP 2", area: "VIP", x: 46.8, y: 25.5, w: 7.2, h: 14.0, capacity: 10, shape: "rect", description: "Meja VIP 2 (10 Kursi)" },
@@ -69,16 +69,58 @@ const BLUEPRINT_TABLES: TableHotspot[] = [
   { number: 312, code: "O12", area: "Outdoor", x: 89.5, y: 76.0, w: 6.8, h: 11.5, capacity: 12, shape: "rect", description: "Meja Panjang O12 (12 Kursi)" },
 ];
 
-const ROOM_AREAS = [
+const BLUEPRINT_TABLES_L2: TableHotspot[] = [
+  // ── 1. VIP MEETING ROOM (1 MEJA BESAR KONFERENSI - 10 KURSI) ──
+  { number: 401, code: "M1", area: "VIP", x: 45.4, y: 24.0, w: 8.5, h: 12.0, capacity: 10, shape: "rect", description: "Ruang VIP Meeting Room (10 Kursi)" },
+
+  // ── 2. SMOKING BALCONY (2 MEJA: SB1, SB2 - 4 KURSI) ──
+  { number: 402, code: "SB1", area: "Room Smoking", x: 20.8, y: 22.5, w: 5.5, h: 9.0, capacity: 4, shape: "rect", description: "Sofa Balcony 1 (4 Kursi)" },
+  { number: 403, code: "SB2", area: "Room Smoking", x: 20.8, y: 41.5, w: 5.5, h: 9.0, capacity: 4, shape: "rect", description: "Sofa Balcony 2 (4 Kursi)" },
+
+  // ── 3. INDOOR CO-WORKING LOUNGE (5 MEJA: CW1 - CW5) ──
+  { number: 404, code: "CW1", area: "Indoor", x: 42.0, y: 51.5, w: 10.0, h: 11.0, capacity: 8, shape: "rect", description: "Meja Co-Working Pod Utama (8 Kursi)" },
+  { number: 405, code: "CW2", area: "Indoor", x: 25.8, y: 64.0, w: 4.5, h: 8.0, capacity: 2, shape: "rect", description: "Focus Work Desk 1 (2 Kursi)" },
+  { number: 406, code: "CW3", area: "Indoor", x: 31.8, y: 78.5, w: 4.5, h: 7.5, capacity: 2, shape: "rect", description: "Focus Work Desk 2 (2 Kursi)" },
+  { number: 407, code: "CW4", area: "Indoor", x: 41.6, y: 74.5, w: 5.5, h: 8.5, capacity: 4, shape: "rect", description: "Meja Kerja Pod Tengah (4 Kursi)" },
+  { number: 408, code: "CW5", area: "Indoor", x: 50.8, y: 73.5, w: 6.5, h: 9.0, capacity: 5, shape: "rect", description: "Sofa Lounge Indoor (5 Kursi)" },
+
+  // ── 4. OUTDOOR ROOFTOP TERRACE (9 MEJA: RT1 - RT9) ──
+  { number: 409, code: "RT1", area: "Outdoor", x: 60.5, y: 25.0, w: 5.0, h: 8.5, capacity: 4, shape: "rect", description: "Meja Teras Rooftop 1 (4 Kursi)" },
+  { number: 410, code: "RT2", area: "Outdoor", x: 70.0, y: 19.5, w: 6.0, h: 9.0, capacity: 6, shape: "rect", description: "Meja Teras Rooftop 2 (6 Kursi)" },
+  { number: 411, code: "RT3", area: "Outdoor", x: 79.5, y: 21.0, w: 7.0, h: 10.0, capacity: 6, shape: "rect", description: "Sofa Sudut Rooftop 3 (6 Kursi)" },
+  { number: 412, code: "RT4", area: "Outdoor", x: 69.5, y: 37.0, w: 7.0, h: 12.0, capacity: 6, shape: "circle", description: "Meja Payung Rooftop 4 (6 Kursi)" },
+  { number: 413, code: "RT5", area: "Outdoor", x: 79.2, y: 38.0, w: 5.5, h: 9.0, capacity: 4, shape: "rect", description: "Meja Teras Rooftop 5 (4 Kursi)" },
+  { number: 414, code: "RT6", area: "Outdoor", x: 69.0, y: 56.5, w: 6.0, h: 10.0, capacity: 4, shape: "circle", description: "Meja Bundar Rooftop 6 (4 Kursi)" },
+  { number: 415, code: "RT7", area: "Outdoor", x: 79.2, y: 56.0, w: 5.5, h: 9.0, capacity: 4, shape: "rect", description: "Meja Teras Rooftop 7 (4 Kursi)" },
+  { number: 416, code: "RT8", area: "Outdoor", x: 70.0, y: 74.5, w: 5.5, h: 9.0, capacity: 4, shape: "rect", description: "Meja Santai Rooftop 8 (4 Kursi)" },
+  { number: 417, code: "RT9", area: "Outdoor", x: 78.5, y: 72.5, w: 7.0, h: 12.0, capacity: 6, shape: "circle", description: "Meja Payung Rooftop 9 (6 Kursi)" },
+];
+
+const ROOM_AREAS_L1 = [
   { id: "VIP", name: "VIP Room", icon: "star", count: 4, badge: "👑 VIP (4 Meja)" },
   { id: "Indoor", name: "Indoor Lounge", icon: "weekend", count: 8, badge: "🛋️ Indoor (8 Meja)" },
   { id: "Room Smoking", name: "Smoking Area", icon: "smoking_rooms", count: 7, badge: "🚬 Smoking (7 Meja)" },
   { id: "Outdoor", name: "Outdoor Area", icon: "deck", count: 12, badge: "🌿 Outdoor (12 Meja)" },
 ];
 
+const ROOM_AREAS_L2 = [
+  { id: "VIP", name: "VIP Meeting", icon: "meeting_room", count: 1, badge: "💼 VIP Meeting (1 Meja)" },
+  { id: "Indoor", name: "Co-Working Lounge", icon: "laptop_chromebook", count: 5, badge: "💻 Co-Working (5 Meja)" },
+  { id: "Room Smoking", name: "Smoking Balcony", icon: "balcony", count: 2, badge: "🚬 Balcony (2 Meja)" },
+  { id: "Outdoor", name: "Rooftop Terrace", icon: "deck", count: 9, badge: "🌿 Rooftop (9 Meja)" },
+];
+
+const ALL_ROOM_OPTIONS = [
+  { id: "VIP", name: "VIP Room / Meeting", icon: "star" },
+  { id: "Indoor", name: "Indoor Lounge / Co-Working", icon: "weekend" },
+  { id: "Room Smoking", name: "Smoking Area / Balcony", icon: "smoking_rooms" },
+  { id: "Outdoor", name: "Outdoor / Rooftop Terrace", icon: "deck" },
+];
+
 export default function AdminTablesPage() {
   const [tables, setTables] = useState<Table[]>([]);
   const [viewMode, setViewMode] = useState<"floorplan" | "grid">("floorplan");
+  const [selectedFloor, setSelectedFloor] = useState<1 | 2>(1);
   const [selectedAreaFilter, setSelectedAreaFilter] = useState<string>("ALL");
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState("");
@@ -210,12 +252,17 @@ export default function AdminTablesPage() {
     };
   };
 
+  const currentBlueprint = selectedFloor === 1 ? BLUEPRINT_TABLES_L1 : BLUEPRINT_TABLES_L2;
+  const currentRoomAreas = selectedFloor === 1 ? ROOM_AREAS_L1 : ROOM_AREAS_L2;
+  const currentFloorImage = selectedFloor === 1 ? "/assets/denahlokasicoffeshop.jpeg" : "/assets/denah_lantai_2.jpg";
+  const currentFloorTitle = selectedFloor === 1 ? "Lantai 1 - Utama & Outdoor Garden" : "Lantai 2 - Cafe & Co-Working Rooftop";
+
   const filteredTables = tables.filter((t) => {
     if (selectedAreaFilter === "ALL") return true;
     return t.seatingArea.toLowerCase().includes(selectedAreaFilter.toLowerCase());
   });
 
-  const filteredHotspots = BLUEPRINT_TABLES.filter((h) => {
+  const filteredHotspots = currentBlueprint.filter((h) => {
     if (selectedAreaFilter === "ALL") return true;
     return h.area.toLowerCase().includes(selectedAreaFilter.toLowerCase());
   });
@@ -234,7 +281,7 @@ export default function AdminTablesPage() {
                 Denah Lokasi Tempat Duduk & Barcode QR
               </h2>
               <p className="text-xs text-slate-500 font-medium">
-                Denah tata letak besar dan jelas. Klik meja manapun pada denah untuk menampilkan Barcode QR & status di bawahnya.
+                Denah tata letak presisi multi-lantai. Klik meja manapun pada denah untuk menampilkan Barcode QR & status di bawahnya.
               </p>
             </div>
           </div>
@@ -266,6 +313,62 @@ export default function AdminTablesPage() {
               Daftar Grid
             </button>
           </div>
+        </div>
+      </div>
+
+      {/* 1.5. Selector Lantai (Lantai 1 vs Lantai 2) */}
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 p-4 rounded-3xl text-white shadow-md flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="w-12 h-12 rounded-2xl bg-amber-400/10 border border-amber-400/20 flex items-center justify-center text-amber-400 shrink-0">
+            <span className="material-symbols-outlined text-2xl">apartment</span>
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-amber-400 uppercase tracking-widest">Denah Lantai Bangunan</span>
+              <span className="text-[10px] bg-white/10 px-2 py-0.5 rounded-full font-bold">2 Lantai Aktif</span>
+            </div>
+            <p className="text-lg font-black text-white tracking-tight mt-0.5">
+              {currentFloorTitle}
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-white/10 p-1.5 rounded-2xl flex items-center gap-2 border border-white/10 w-full sm:w-auto justify-center">
+          <button
+            onClick={() => {
+              setSelectedFloor(1);
+              setSelectedAreaFilter("ALL");
+            }}
+            className={`px-5 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer flex-1 sm:flex-initial justify-center ${
+              selectedFloor === 1
+                ? "bg-white text-slate-900 shadow-md scale-100"
+                : "text-slate-300 hover:text-white hover:bg-white/10"
+            }`}
+          >
+            <span className="material-symbols-outlined text-base">storefront</span>
+            Lantai 1 (Utama)
+            <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${selectedFloor === 1 ? "bg-slate-100 text-slate-700" : "bg-white/20 text-white"}`}>
+              {BLUEPRINT_TABLES_L1.length} Meja
+            </span>
+          </button>
+
+          <button
+            onClick={() => {
+              setSelectedFloor(2);
+              setSelectedAreaFilter("ALL");
+            }}
+            className={`px-5 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 cursor-pointer flex-1 sm:flex-initial justify-center ${
+              selectedFloor === 2
+                ? "bg-amber-400 text-slate-950 shadow-md scale-100"
+                : "text-slate-300 hover:text-white hover:bg-white/10"
+            }`}
+          >
+            <span className="material-symbols-outlined text-base">deck</span>
+            Lantai 2 (Rooftop & Co-Work)
+            <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${selectedFloor === 2 ? "bg-slate-900 text-amber-300" : "bg-white/20 text-white"}`}>
+              {BLUEPRINT_TABLES_L2.length} Meja
+            </span>
+          </button>
         </div>
       </div>
 
@@ -313,7 +416,9 @@ export default function AdminTablesPage() {
           </div>
           <div>
             <p className="text-xl font-black text-slate-800">4 Ruangan</p>
-            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">VIP, Indoor, Smoke, Out</p>
+            <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">
+              {selectedFloor === 1 ? "VIP, Indoor, Smoke, Out" : "VIP Meet, Co-Work, Balcony, Roof"}
+            </p>
           </div>
         </div>
       </div>
@@ -330,10 +435,10 @@ export default function AdminTablesPage() {
             }`}
           >
             <span className="material-symbols-outlined text-sm">apartment</span>
-            Semua Ruangan ({BLUEPRINT_TABLES.length})
+            Semua Ruangan Lantai {selectedFloor} ({currentBlueprint.length})
           </button>
 
-          {ROOM_AREAS.map((area) => {
+          {currentRoomAreas.map((area) => {
             const isSelected = selectedAreaFilter.toLowerCase() === area.id.toLowerCase();
             return (
               <button
@@ -381,8 +486,11 @@ export default function AdminTablesPage() {
               <div className="flex items-center gap-2.5">
                 <span className="material-symbols-outlined text-amber-500 text-xl">touch_app</span>
                 <div>
-                  <span className="text-slate-800 font-extrabold text-sm block">
-                    Denah Arsitektural Coffee Shop
+                  <span className="text-slate-800 font-extrabold text-sm block flex items-center gap-2">
+                    Denah Arsitektural • {currentFloorTitle}
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-[#3B4CB8] border border-indigo-100">
+                      Lantai {selectedFloor}
+                    </span>
                   </span>
                   <span className="text-slate-500 text-xs font-medium">
                     Klik langsung meja pada denah di bawah untuk membuka Barcode QR & memantau status
@@ -409,13 +517,13 @@ export default function AdminTablesPage() {
               {/* Gambar Arsitektural Asli */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/assets/denahlokasicoffeshop.jpeg"
-                alt="Denah Lokasi Coffee Shop"
+                src={currentFloorImage}
+                alt={currentFloorTitle}
                 className="w-full h-auto block select-none pointer-events-none"
               />
 
               {/* OVERLAY TEMPAT DUDUK INTERAKTIF PRESISI & BESAR */}
-              {BLUEPRINT_TABLES.map((hotspot) => {
+              {currentBlueprint.map((hotspot) => {
                 const table = findTableForHotspot(hotspot);
                 const isSelected = selectedTable?.number === hotspot.number;
                 const isOccupied = table.status === "occupied";
@@ -471,7 +579,7 @@ export default function AdminTablesPage() {
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-bold text-slate-700 flex items-center gap-2">
                   <span className="material-symbols-outlined text-base text-[#3B4CB8]">table_restaurant</span>
-                  Pilih Cepat Tempat Duduk di Ruangan Ini:
+                  Pilih Cepat Tempat Duduk di Lantai {selectedFloor} ({selectedAreaFilter === "ALL" ? "Semua Ruangan" : selectedAreaFilter}):
                 </p>
                 <span className="text-xs text-slate-400 font-medium">
                   {filteredHotspots.length} meja siap dipilih
@@ -772,7 +880,7 @@ export default function AdminTablesPage() {
                   Lokasi Ruangan *
                 </label>
                 <div className="grid grid-cols-2 gap-2">
-                  {ROOM_AREAS.map((room) => {
+                  {ALL_ROOM_OPTIONS.map((room) => {
                     const isSelected = form.seatingArea === room.id;
                     return (
                       <button

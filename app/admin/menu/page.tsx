@@ -4,11 +4,21 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { MENU_ITEMS, MENU_CATEGORIES, MenuItem } from "@/app/coffeshop-order/_data/menuData";
 
-const EMPTY_FORM = { id: "", name: "", description: "", price: 0, category: "Coffee", subCategory: "", image: "" };
+const EMPTY_FORM = { id: "", name: "", description: "", price: 0, category: "Coffee", subCategory: "Basic Coffee", image: "" };
+
+const CATEGORY_SUB_MAP: Record<string, string[]> = {
+  Coffee: ["Basic Coffee", "Sweet Edition", "Taste of Coffee Shop", "Barista Choice"],
+  "Non-Coffee": ["Non-Coffee", "Matcha Series"],
+  "Mocktails & Juice": ["Mocktails", "Smoothies & Juice"],
+  Food: ["Salad & Burger", "Main Course", "Noodle Edition", "Neapolitan Pizza", "Sushi Club"],
+  Snacks: ["Easy Bites", "Dimsum Series"],
+  "Pastry & Dessert": ["Cookies Series", "Croissant", "Donut", "Cinnamon Roll", "Pastry"],
+};
 
 export default function AdminMenuPage() {
   const [items, setItems] = useState<MenuItem[]>([]);
   const [catFilter, setCatFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState<MenuItem | null>(null);
   const [form, setForm] = useState<typeof EMPTY_FORM>({ ...EMPTY_FORM });
@@ -16,7 +26,7 @@ export default function AdminMenuPage() {
 
   useEffect(() => {
     const saved = localStorage.getItem("admin_menu_items");
-    const initialItems = saved ? JSON.parse(saved) as MenuItem[] : MENU_ITEMS;
+    const initialItems = saved ? (JSON.parse(saved) as MenuItem[]) : MENU_ITEMS;
     const timer = window.setTimeout(() => setItems(initialItems), 0);
     return () => window.clearTimeout(timer);
   }, []);
@@ -28,20 +38,33 @@ export default function AdminMenuPage() {
 
   const openAdd = () => {
     setEditing(null);
-    setForm({ ...EMPTY_FORM });
+    setForm({
+      ...EMPTY_FORM,
+      category: "Coffee",
+      subCategory: CATEGORY_SUB_MAP["Coffee"][0] || "Basic Coffee",
+    });
     setShowModal(true);
   };
 
   const openEdit = (item: MenuItem) => {
     setEditing(item);
-    setForm({ id: item.id, name: item.name, description: item.description, price: item.price, category: item.category, subCategory: item.subCategory || "", image: item.image || "" });
+    const defaultSub = (CATEGORY_SUB_MAP[item.category] || [])[0] || "";
+    setForm({
+      id: item.id,
+      name: item.name,
+      description: item.description,
+      price: item.price,
+      category: item.category,
+      subCategory: item.subCategory || defaultSub,
+      image: item.image || "",
+    });
     setShowModal(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (editing) {
-      save(items.map(i => i.id === editing.id ? { ...form } : i));
+      save(items.map((i) => (i.id === editing.id ? { ...form } : i)));
     } else {
       const newId = `custom_${Date.now()}`;
       save([...items, { ...form, id: newId }]);
@@ -50,123 +73,177 @@ export default function AdminMenuPage() {
   };
 
   const handleDelete = (id: string) => {
-    save(items.filter(i => i.id !== id));
+    save(items.filter((i) => i.id !== id));
     setDeleteConfirm(null);
   };
 
-  const filtered = items.filter(i => {
+  const filtered = items.filter((i) => {
     const matchCat = catFilter === "all" || i.category === catFilter;
-    return matchCat;
+    const q = searchTerm.toLowerCase();
+    const matchSearch =
+      !searchTerm ||
+      i.name.toLowerCase().includes(q) ||
+      i.description.toLowerCase().includes(q) ||
+      (i.subCategory && i.subCategory.toLowerCase().includes(q)) ||
+      i.category.toLowerCase().includes(q);
+
+    return matchCat && matchSearch;
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7 text-slate-900">
       {/* Header Info */}
-      <div className="flex items-center justify-between">
+      <div className="border-b border-slate-200 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-slate-800">Menu Produk</h2>
-          <p className="text-xs text-slate-500 mt-0.5">Kelola daftar produk, harga, dan gambar menu</p>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Menu Produk</h1>
+          <p className="text-sm text-slate-500 mt-1">Kelola daftar hidangan kopi, minuman, makanan, dan harga</p>
         </div>
-      </div>
-
-      {/* Controls Bar */}
-      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
-        <select
-          value={catFilter}
-          onChange={e => setCatFilter(e.target.value)}
-          className="w-full sm:w-auto bg-white border border-slate-200 rounded-2xl px-4 py-2.5 text-slate-700 text-sm focus:outline-none focus:border-[#3B4CB8] shadow-sm transition-all"
-        >
-          <option value="all">Semua Kategori</option>
-          {MENU_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
-        </select>
 
         <button
           id="add-menu-btn"
           onClick={openAdd}
-          className="w-full sm:w-auto bg-[#3B4CB8] hover:bg-[#3241A3] text-white font-semibold px-4 py-2.5 rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap shadow-md shadow-indigo-100"
+          className="bg-slate-900 hover:bg-slate-800 text-white font-semibold px-4 py-2.5 rounded-xl text-sm transition-all flex items-center justify-center gap-2 whitespace-nowrap shadow-xs cursor-pointer self-start sm:self-auto"
         >
           <span className="material-symbols-outlined text-base">add</span>
           Tambah Menu
         </button>
       </div>
 
-      {/* Badges / Stats */}
-      <div className="flex gap-2 flex-wrap">
-        <div className="bg-white border border-slate-100 rounded-full px-3.5 py-1.5 text-xs text-slate-500 shadow-sm">
-          Menampilkan <span className="text-[#3B4CB8] font-bold">{filtered.length}</span> item
+      {/* Controls Bar: Search & Category Filter */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-xs">
+        {/* Left: Category Dropdown / Filter */}
+        <div className="flex items-center gap-2 flex-1 max-w-md">
+          <div className="relative w-full sm:w-56">
+            <select
+              value={catFilter}
+              onChange={(e) => setCatFilter(e.target.value)}
+              className="w-full bg-slate-50 hover:bg-slate-100/70 border border-slate-200 rounded-xl px-3.5 py-2 text-slate-800 text-xs font-semibold focus:outline-none focus:bg-white focus:border-slate-800 transition-colors cursor-pointer"
+            >
+              <option value="all">Semua Kategori ({items.length})</option>
+              {MENU_CATEGORIES.map((c) => {
+                const count = items.filter((i) => i.category === c.id).length;
+                return (
+                  <option key={c.id} value={c.id}>
+                    {c.label} ({count})
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+
+          <div className="hidden sm:flex items-center text-xs font-medium text-slate-500 pl-1">
+            Menampilkan <span className="font-bold text-slate-900 mx-1">{filtered.length}</span> menu
+          </div>
         </div>
-        <div className="bg-white border border-slate-100 rounded-full px-3.5 py-1.5 text-xs text-slate-500 shadow-sm">
-          Total menu <span className="text-slate-800 font-bold">{items.length}</span>
+
+        {/* Right: Search Input Box */}
+        <div className="relative w-full md:w-72">
+          <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-base">
+            search
+          </span>
+          <input
+            type="text"
+            placeholder="Cari nama hidangan, deskripsi..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-9 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-800 transition-colors font-medium"
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-sm">cancel</span>
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Grid Menu dengan Image & Border Action Footer */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-        {filtered.map(item => (
-          <div key={item.id} className="bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
-            <div>
-              {/* Image Preview Container */}
-              <div className="relative h-44 bg-slate-100 overflow-hidden">
-                {item.image ? (
-                  <Image src={item.image} alt={item.name} fill className="object-cover" />
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center bg-indigo-50/50">
-                    <span className="material-symbols-outlined text-slate-300 text-4xl">restaurant</span>
+      {/* Grid Menu Cards */}
+      {filtered.length === 0 ? (
+        <div className="bg-white border border-slate-200 rounded-2xl p-16 text-center shadow-xs">
+          <span className="material-symbols-outlined text-slate-300 text-5xl block mb-2">restaurant_menu</span>
+          <p className="text-base font-bold text-slate-800">Tidak ada menu yang cocok</p>
+          <p className="text-xs text-slate-400 mt-1">
+            {searchTerm
+              ? `Tidak ada hasil pencarian untuk "${searchTerm}" pada kategori ini.`
+              : "Belum ada produk di kategori ini."}
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          {filtered.map((item) => (
+            <div
+              key={item.id}
+              className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs hover:border-slate-300 hover:shadow-md transition-all flex flex-col justify-between group"
+            >
+              <div>
+                {/* Image Container */}
+                <div className="relative h-44 bg-slate-100 overflow-hidden">
+                  {item.image ? (
+                    <Image
+                      src={item.image}
+                      alt={item.name}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center bg-slate-100">
+                      <span className="material-symbols-outlined text-slate-300 text-4xl">restaurant</span>
+                    </div>
+                  )}
+                  <div className="absolute top-3 left-3">
+                    <span className="bg-slate-900/80 backdrop-blur-xs text-white text-[11px] px-2.5 py-0.5 rounded-md font-semibold shadow-xs">
+                      {item.category}
+                    </span>
                   </div>
-                )}
-                <div className="absolute top-3 left-3">
-                  <span className="bg-white/90 backdrop-blur-md text-[#3B4CB8] text-[11px] px-3 py-1 rounded-full font-bold shadow-sm">{item.category}</span>
+                </div>
+
+                {/* Card Info */}
+                <div className="p-4 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="text-slate-900 font-bold text-sm leading-snug">{item.name}</h3>
+                    <p className="text-slate-900 font-extrabold text-sm whitespace-nowrap font-inter">
+                      Rp {item.price.toLocaleString("id-ID")}
+                    </p>
+                  </div>
+                  <p className="text-slate-500 text-xs line-clamp-2 leading-relaxed">{item.description}</p>
                 </div>
               </div>
 
-              {/* Card Body */}
-              <div className="p-4 space-y-2">
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="text-slate-800 font-bold text-base leading-snug">{item.name}</h3>
-                  <p className="text-[#3B4CB8] font-bold text-sm whitespace-nowrap">Rp {item.price.toLocaleString("id-ID")}</p>
+              {/* Actions Footer */}
+              <div className="p-4 pt-0">
+                <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
+                  <button
+                    onClick={() => openEdit(item)}
+                    className="flex-1 py-2 px-3 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 cursor-pointer border border-slate-200/60"
+                  >
+                    <span className="material-symbols-outlined text-sm text-slate-500">edit</span>
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => setDeleteConfirm(item.id)}
+                    className="py-2 px-3 rounded-xl bg-slate-50 hover:bg-rose-50 hover:text-rose-600 text-slate-400 text-xs font-semibold transition-colors flex items-center justify-center cursor-pointer border border-slate-200/60"
+                    title="Hapus menu"
+                  >
+                    <span className="material-symbols-outlined text-sm">delete</span>
+                  </button>
                 </div>
-                <p className="text-slate-400 text-xs line-clamp-2 leading-relaxed">{item.description}</p>
               </div>
             </div>
+          ))}
+        </div>
+      )}
 
-            {/* Actions Inside Border Footer */}
-            <div className="p-4 pt-0">
-              <div className="flex items-center gap-2 pt-3 border-t border-slate-100">
-                <button
-                  onClick={() => openEdit(item)}
-                  className="flex-1 py-2 px-3 rounded-xl bg-slate-50 hover:bg-indigo-50 hover:text-[#3B4CB8] text-slate-600 text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
-                >
-                  <span className="material-symbols-outlined text-sm">edit</span>
-                  Edit
-                </button>
-                <button
-                  onClick={() => setDeleteConfirm(item.id)}
-                  className="py-2 px-3 rounded-xl bg-slate-50 hover:bg-rose-50 hover:text-rose-500 text-slate-400 text-xs font-semibold transition-colors flex items-center justify-center"
-                  title="Hapus menu"
-                >
-                  <span className="material-symbols-outlined text-sm">delete</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
-
-        {filtered.length === 0 && (
-          <div className="col-span-full bg-white border border-slate-100 rounded-3xl p-12 text-center shadow-sm">
-            <span className="material-symbols-outlined text-slate-300 text-5xl">restaurant_menu</span>
-            <p className="text-slate-400 mt-2 text-xs font-medium">Tidak ada menu pada kategori ini</p>
-          </div>
-        )}
-      </div>
-
-      {/* Modal Form */}
+      {/* Modal Form Tambah / Edit Menu */}
       {showModal && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white w-full max-w-[560px] rounded-xl border border-slate-200 shadow-xl overflow-hidden animate-scale-up">
-
+          <div className="bg-white w-full max-w-[560px] rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-scale-up">
             {/* Header */}
-            <div className="flex items-center justify-between px-6 pt-5 pb-3">
-              <h2 className="text-lg font-bold text-slate-800 tracking-tight">{editing ? "Edit Menu" : "Tambah Menu"}</h2>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <h2 className="text-base font-bold text-slate-900 tracking-tight">
+                {editing ? "Edit Menu Produk" : "Tambah Menu Produk"}
+              </h2>
               <button
                 type="button"
                 onClick={() => setShowModal(false)}
@@ -176,8 +253,8 @@ export default function AdminMenuPage() {
               </button>
             </div>
 
-            {/* Body - Grid 2 kolom efisien tanpa scroll */}
-            <form onSubmit={handleSubmit} id="menu-form" className="px-6 py-2 grid grid-cols-2 gap-3.5">
+            {/* Body */}
+            <form onSubmit={handleSubmit} id="menu-form" className="p-6 grid grid-cols-2 gap-3.5">
               {/* Nama Menu */}
               <div className="col-span-1">
                 <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5 block" htmlFor="menu_name">
@@ -187,8 +264,8 @@ export default function AdminMenuPage() {
                   id="menu_name"
                   required
                   value={form.name}
-                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                  className="w-full text-sm bg-white border border-slate-200 hover:border-slate-300 rounded-lg px-3.5 py-2 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                  className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-800 transition-all font-medium"
                   placeholder="Nama menu..."
                 />
               </div>
@@ -206,8 +283,8 @@ export default function AdminMenuPage() {
                     type="number"
                     min="0"
                     value={form.price}
-                    onChange={e => setForm(f => ({ ...f, price: Number(e.target.value) }))}
-                    className="w-full text-sm bg-white border border-slate-200 hover:border-slate-300 rounded-lg pl-9 pr-3 py-2 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                    onChange={(e) => setForm((f) => ({ ...f, price: Number(e.target.value) }))}
+                    className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-800 transition-all font-medium"
                     placeholder="25000"
                   />
                 </div>
@@ -221,25 +298,45 @@ export default function AdminMenuPage() {
                 <select
                   id="menu_category"
                   value={form.category}
-                  onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
-                  className="w-full text-sm bg-white border border-slate-200 hover:border-slate-300 rounded-lg px-3 py-2 text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  onChange={(e) => {
+                    const newCat = e.target.value;
+                    const availableSubs = CATEGORY_SUB_MAP[newCat] || [];
+                    setForm((f) => ({
+                      ...f,
+                      category: newCat,
+                      subCategory: availableSubs[0] || "",
+                    }));
+                  }}
+                  className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:bg-white focus:border-slate-800 transition-all font-medium cursor-pointer"
                 >
-                  {MENU_CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+                  {MENU_CATEGORIES.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.label}
+                    </option>
+                  ))}
                 </select>
               </div>
 
               {/* Sub Kategori */}
               <div className="col-span-1">
                 <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5 block" htmlFor="menu_sub">
-                  Sub Kategori
+                  Sub Kategori *
                 </label>
-                <input
+                <select
                   id="menu_sub"
                   value={form.subCategory}
-                  onChange={e => setForm(f => ({ ...f, subCategory: e.target.value }))}
-                  className="w-full text-sm bg-white border border-slate-200 hover:border-slate-300 rounded-lg px-3.5 py-2 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                  placeholder="Basic Coffee, dll..."
-                />
+                  onChange={(e) => setForm((f) => ({ ...f, subCategory: e.target.value }))}
+                  className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:bg-white focus:border-slate-800 transition-all font-medium cursor-pointer"
+                >
+                  {(CATEGORY_SUB_MAP[form.category] || []).map((sub) => (
+                    <option key={sub} value={sub}>
+                      {sub}
+                    </option>
+                  ))}
+                  {form.subCategory && !(CATEGORY_SUB_MAP[form.category] || []).includes(form.subCategory) && (
+                    <option value={form.subCategory}>{form.subCategory}</option>
+                  )}
+                </select>
               </div>
 
               {/* Deskripsi */}
@@ -251,9 +348,9 @@ export default function AdminMenuPage() {
                   id="menu_desc"
                   required
                   value={form.description}
-                  onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                  className="w-full text-sm bg-white border border-slate-200 hover:border-slate-300 rounded-lg px-3.5 py-2 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all resize-none h-16"
-                  placeholder="Deskripsi menu..."
+                  onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                  className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-800 transition-all resize-none h-16 font-medium"
+                  placeholder="Deskripsi bahan dan rasa menu..."
                   rows={2}
                 />
               </div>
@@ -266,70 +363,69 @@ export default function AdminMenuPage() {
                 <input
                   id="menu_image"
                   value={form.image}
-                  onChange={e => setForm(f => ({ ...f, image: e.target.value }))}
-                  className="w-full text-sm bg-white border border-slate-200 hover:border-slate-300 rounded-lg px-3.5 py-2 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                  placeholder="/assets/Menu/nama-gambar.jpg"
+                  onChange={(e) => setForm((f) => ({ ...f, image: e.target.value }))}
+                  className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-slate-800 transition-all font-medium"
+                  placeholder="/assets/Menu/BlackCoffe.jpeg"
                 />
               </div>
             </form>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 mt-3">
+            <div className="flex items-center justify-end gap-2.5 px-6 py-4 border-t border-slate-100 bg-slate-50/50">
               <button
                 type="button"
                 onClick={() => setShowModal(false)}
-                className="px-4 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer"
+                className="px-4 py-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
               >
-                Cancel
+                Batal
               </button>
               <button
                 form="menu-form"
                 type="submit"
-                className="px-5 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-xs cursor-pointer"
+                className="px-5 py-2 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-xl transition-colors shadow-xs cursor-pointer"
               >
-                Save
+                Simpan Menu
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Delete Confirm */}
+      {/* Delete Confirm Modal */}
       {deleteConfirm && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white w-full max-w-sm rounded-xl border border-slate-200 shadow-xl overflow-hidden animate-scale-up">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
-              <h2 className="text-slate-800 font-bold text-lg">Hapus Menu?</h2>
-              <button onClick={() => setDeleteConfirm(null)} className="text-slate-400 hover:text-slate-700 transition-colors p-1.5 rounded-full hover:bg-slate-100">
-                <span className="material-symbols-outlined">close</span>
+          <div className="bg-white w-full max-w-sm rounded-2xl border border-slate-200 shadow-xl overflow-hidden animate-scale-up">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <h2 className="text-slate-900 font-bold text-base">Hapus Menu?</h2>
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="text-slate-400 hover:text-slate-700 transition-colors p-1 rounded-full hover:bg-slate-100 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-lg">close</span>
               </button>
             </div>
-            <div className="px-6 py-5">
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center flex-shrink-0">
-                  <span className="material-symbols-outlined text-red-500" style={{ fontVariationSettings: "'FILL' 1" }}>delete</span>
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-slate-700 mb-1">Konfirmasi Hapus</p>
-                  <p className="text-sm text-slate-500 leading-relaxed">Tindakan ini tidak dapat dibatalkan.</p>
-                </div>
-              </div>
+            <div className="p-6">
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Apakah Anda yakin ingin menghapus hidangan ini dari daftar menu produk? Tindakan ini tidak dapat dibatalkan.
+              </p>
             </div>
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 bg-slate-50 rounded-b-xl">
-              <button onClick={() => setDeleteConfirm(null)}
-                className="text-sm font-semibold px-5 py-2.5 rounded-lg bg-white text-slate-600 border border-slate-200 hover:bg-slate-100 transition-colors">
+            <div className="flex items-center justify-end gap-2.5 px-6 py-4 border-t border-slate-100 bg-slate-50">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="text-xs font-semibold px-4 py-2 rounded-xl bg-white text-slate-600 border border-slate-200 hover:bg-slate-100 transition-colors cursor-pointer"
+              >
                 Batal
               </button>
-              <button onClick={() => handleDelete(deleteConfirm)}
-                className="text-sm font-semibold px-5 py-2.5 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors shadow-sm">
+              <button
+                onClick={() => handleDelete(deleteConfirm)}
+                className="text-xs font-semibold px-4 py-2 rounded-xl bg-rose-600 text-white hover:bg-rose-700 transition-colors shadow-xs cursor-pointer"
+              >
                 Ya, Hapus
               </button>
             </div>
           </div>
         </div>
       )}
-
-
     </div>
   );
 }

@@ -26,12 +26,28 @@ func (s OrderService) Create(request dto.CreateOrderRequest) (any, error) {
 		var custID *uint
 		if request.CustomerID > 0 {
 			custID = &request.CustomerID
+		} else if request.CustomerName != "" {
+			var cust internal.Customer
+			if err := tx.Where("nama = ?", request.CustomerName).Order("id desc").First(&cust).Error; err == nil {
+				custID = &cust.ID
+			}
+		}
+
+		tableID := request.TableID
+		if tableID == 0 && custID != nil {
+			var cust internal.Customer
+			if err := tx.First(&cust, *custID).Error; err == nil && cust.Meja != "" {
+				var tbl internal.Table
+				if err := tx.Where("table_number = ?", cust.Meja).First(&tbl).Error; err == nil {
+					tableID = tbl.ID
+				}
+			}
 		}
 
 		order = internal.Order{
 			CustomerID:   custID,
 			CustomerName: request.CustomerName,
-			TableID:      request.TableID,
+			TableID:      tableID,
 			Status:       "pending",
 		}
 		if err := tx.Create(&order).Error; err != nil {
@@ -49,44 +65,44 @@ func (s OrderService) Create(request dto.CreateOrderRequest) (any, error) {
 			}
 		}
 
+		// Hitung Promo & Diskon
 		if request.PromoID != nil && *request.PromoID > 0 {
 			var promo internal.Promo
 			if err := tx.First(&promo, *request.PromoID).Error; err == nil {
 				order.PromoID = &promo.ID
-				if promo.Type == "fixed" {
+				if request.DiscountAmount > 0 {
+					order.DiscountAmount = request.DiscountAmount
+				} else if promo.Type == "fixed" {
 					order.DiscountAmount = promo.Discount
 				} else {
 					order.DiscountAmount = order.TotalAmount * (promo.Discount / 100)
 				}
-				if order.DiscountAmount > order.TotalAmount {
-					order.DiscountAmount = order.TotalAmount
-				}
-				order.TotalAmount -= order.DiscountAmount
 			}
 		} else if request.PromoCode != "" {
 			var promo internal.Promo
 			if err := tx.Where("code = ? AND active = ?", request.PromoCode, true).First(&promo).Error; err == nil {
 				order.PromoID = &promo.ID
-				if promo.Type == "fixed" {
+				if request.DiscountAmount > 0 {
+					order.DiscountAmount = request.DiscountAmount
+				} else if promo.Type == "fixed" {
 					order.DiscountAmount = promo.Discount
 				} else {
 					order.DiscountAmount = order.TotalAmount * (promo.Discount / 100)
 				}
-				if order.DiscountAmount > order.TotalAmount {
-					order.DiscountAmount = order.TotalAmount
-				}
-				order.TotalAmount -= order.DiscountAmount
 			}
 		} else if request.DiscountAmount > 0 {
 			order.DiscountAmount = request.DiscountAmount
+		}
+
+		if order.DiscountAmount > 0 {
 			if order.DiscountAmount > order.TotalAmount {
 				order.DiscountAmount = order.TotalAmount
 			}
 			order.TotalAmount -= order.DiscountAmount
 		}
 
-		if err := tx.Model(&internal.Table{}).Where("id = ?", request.TableID).Update("status", "occupied").Error; err != nil {
-			return err
+		if tableID > 0 {
+			_ = tx.Model(&internal.Table{}).Where("id = ?", tableID).Update("status", "occupied").Error
 		}
 		return tx.Save(&order).Error
 	})

@@ -23,7 +23,26 @@ interface TableHotspot {
   description: string;
 }
 
-const BLUEPRINT_TABLES: TableHotspot[] = [
+interface AreaOption {
+  key: string;
+  label: string;
+  area: "VIP" | "Indoor" | "Room Smoking" | "Outdoor";
+  floor: 1 | 2;
+  description: string;
+}
+
+const AREA_OPTIONS: AreaOption[] = [
+  { key: "L1-Indoor", label: "Lantai 1 • Indoor AC Lounge", area: "Indoor", floor: 1, description: "Ruangan ber-AC nyaman & tenang" },
+  { key: "L1-VIP", label: "Lantai 1 • VIP Room", area: "VIP", floor: 1, description: "Privat 6-10 orang" },
+  { key: "L1-Smoking", label: "Lantai 1 • Smoking Area", area: "Room Smoking", floor: 1, description: "Area smoking tertutup" },
+  { key: "L1-Outdoor", label: "Lantai 1 • Outdoor Garden", area: "Outdoor", floor: 1, description: "Taman terbuka & asri" },
+  { key: "L2-VIP", label: "Lantai 2 • VIP Meeting Room (M1)", area: "VIP", floor: 2, description: "Ruang konferensi & rapat" },
+  { key: "L2-Indoor", label: "Lantai 2 • Co-Working Lounge", area: "Indoor", floor: 2, description: "Meja kerja pod & sofa santai" },
+  { key: "L2-Smoking", label: "Lantai 2 • Smoking Balcony", area: "Room Smoking", floor: 2, description: "Balkon semi terbuka" },
+  { key: "L2-Outdoor", label: "Lantai 2 • Rooftop Terrace", area: "Outdoor", floor: 2, description: "Pemandangan rooftop terbuka" },
+];
+
+const BLUEPRINT_TABLES_L1: TableHotspot[] = [
   // ── 1. ZONA VIP ROOM ──
   { number: 101, code: "VIP 1", area: "VIP", x: 39.3, y: 25.5, w: 5.6, h: 14.0, capacity: 6, shape: "rect", description: "Meja VIP 1 (6 Kursi)" },
   { number: 102, code: "VIP 2", area: "VIP", x: 46.8, y: 25.5, w: 7.2, h: 14.0, capacity: 10, shape: "rect", description: "Meja VIP 2 (10 Kursi)" },
@@ -64,6 +83,35 @@ const BLUEPRINT_TABLES: TableHotspot[] = [
   { number: 312, code: "O12", area: "Outdoor", x: 89.5, y: 76.0, w: 6.8, h: 11.5, capacity: 12, shape: "rect", description: "Meja Panjang O12 (12 Kursi)" },
 ];
 
+const BLUEPRINT_TABLES_L2: TableHotspot[] = [
+  // ── 1. VIP MEETING ROOM (1 MEJA BESAR KONFERENSI - 10 KURSI) ──
+  { number: 401, code: "M1", area: "VIP", x: 45.4, y: 24.0, w: 8.5, h: 12.0, capacity: 10, shape: "rect", description: "Ruang VIP Meeting Room (10 Kursi)" },
+
+  // ── 2. SMOKING BALCONY (2 MEJA: SB1, SB2 - 4 KURSI) ──
+  { number: 402, code: "SB1", area: "Room Smoking", x: 20.8, y: 22.5, w: 5.5, h: 9.0, capacity: 4, shape: "rect", description: "Sofa Balcony 1 (4 Kursi)" },
+  { number: 403, code: "SB2", area: "Room Smoking", x: 20.8, y: 41.5, w: 5.5, h: 9.0, capacity: 4, shape: "rect", description: "Sofa Balcony 2 (4 Kursi)" },
+
+  // ── 3. INDOOR CO-WORKING LOUNGE (5 MEJA: CW1 - CW5) ──
+  { number: 404, code: "CW1", area: "Indoor", x: 42.0, y: 51.5, w: 10.0, h: 11.0, capacity: 8, shape: "rect", description: "Meja Co-Working Pod Utama (8 Kursi)" },
+  { number: 405, code: "CW2", area: "Indoor", x: 25.8, y: 64.0, w: 4.5, h: 8.0, capacity: 2, shape: "rect", description: "Focus Work Desk 1 (2 Kursi)" },
+  { number: 406, code: "CW3", area: "Indoor", x: 31.8, y: 78.5, w: 4.5, h: 7.5, capacity: 2, shape: "rect", description: "Focus Work Desk 2 (2 Kursi)" },
+  { number: 407, code: "CW4", area: "Indoor", x: 41.6, y: 74.5, w: 5.5, h: 8.5, capacity: 4, shape: "rect", description: "Meja Kerja Pod Tengah (4 Kursi)" },
+  { number: 408, code: "CW5", area: "Indoor", x: 50.8, y: 73.5, w: 6.5, h: 9.0, capacity: 5, shape: "rect", description: "Sofa Lounge Indoor (5 Kursi)" },
+
+  // ── 4. OUTDOOR ROOFTOP TERRACE (9 MEJA: RT1 - RT9) ──
+  { number: 409, code: "RT1", area: "Outdoor", x: 60.5, y: 25.0, w: 5.0, h: 8.5, capacity: 4, shape: "rect", description: "Meja Teras Rooftop 1 (4 Kursi)" },
+  { number: 410, code: "RT2", area: "Outdoor", x: 70.0, y: 19.5, w: 6.0, h: 9.0, capacity: 6, shape: "rect", description: "Meja Teras Rooftop 2 (6 Kursi)" },
+  { number: 411, code: "RT3", area: "Outdoor", x: 79.5, y: 21.0, w: 7.0, h: 10.0, capacity: 6, shape: "rect", description: "Sofa Sudut Rooftop 3 (6 Kursi)" },
+  { number: 412, code: "RT4", area: "Outdoor", x: 69.5, y: 37.0, w: 7.0, h: 12.0, capacity: 6, shape: "circle", description: "Meja Payung Rooftop 4 (6 Kursi)" },
+  { number: 413, code: "RT5", area: "Outdoor", x: 79.2, y: 38.0, w: 5.5, h: 9.0, capacity: 4, shape: "rect", description: "Meja Teras Rooftop 5 (4 Kursi)" },
+  { number: 414, code: "RT6", area: "Outdoor", x: 69.0, y: 56.5, w: 6.0, h: 10.0, capacity: 4, shape: "circle", description: "Meja Bundar Rooftop 6 (4 Kursi)" },
+  { number: 415, code: "RT7", area: "Outdoor", x: 79.2, y: 56.0, w: 5.5, h: 9.0, capacity: 4, shape: "rect", description: "Meja Teras Rooftop 7 (4 Kursi)" },
+  { number: 416, code: "RT8", area: "Outdoor", x: 70.0, y: 74.5, w: 5.5, h: 9.0, capacity: 4, shape: "rect", description: "Meja Santai Rooftop 8 (4 Kursi)" },
+  { number: 417, code: "RT9", area: "Outdoor", x: 78.5, y: 72.5, w: 7.0, h: 12.0, capacity: 6, shape: "circle", description: "Meja Payung Rooftop 9 (6 Kursi)" },
+];
+
+const ALL_BLUEPRINT_TABLES = [...BLUEPRINT_TABLES_L1, ...BLUEPRINT_TABLES_L2];
+
 export default function ReservationSection() {
   const [form, setForm] = useState({
     name: "",
@@ -71,14 +119,19 @@ export default function ReservationSection() {
     date: "",
     time: "",
     guests: "2",
-    area: "Indoor",
+    areaKey: "L1-Indoor",
+    area: "Indoor" as "VIP" | "Indoor" | "Room Smoking" | "Outdoor",
     selectedTableNumber: null as number | null,
     selectedTableCode: "",
+    selectedFloor: 1 as 1 | 2,
     description: "",
   });
+
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showFloorPlan, setShowFloorPlan] = useState(false);
+  const [selectedFloor, setSelectedFloor] = useState<1 | 2>(1);
+  const [highlightArea, setHighlightArea] = useState<string>("Indoor");
   const [liveTables, setLiveTables] = useState<TableData[]>([]);
   const [modalSelectedTable, setModalSelectedTable] = useState<TableHotspot | null>(null);
 
@@ -107,10 +160,52 @@ export default function ReservationSection() {
     setForm((current) => ({ ...current, [field]: value }));
   };
 
+  // Handler ketika Customer memilih Area di dropdown formulir
+  const handleAreaChange = (areaKey: string) => {
+    const selectedOption = AREA_OPTIONS.find((opt) => opt.key === areaKey);
+    if (!selectedOption) return;
+
+    // Otomatis sinkronkan lantai dan area fokus denah
+    setSelectedFloor(selectedOption.floor);
+    setHighlightArea(selectedOption.area);
+
+    setForm((current) => {
+      // Jika meja sebelumnya ada di area/lantai berbeda, reset meja terpilih
+      let resetTable = false;
+      if (current.selectedTableNumber) {
+        const prevTable = ALL_BLUEPRINT_TABLES.find((t) => t.number === current.selectedTableNumber);
+        if (!prevTable || prevTable.area !== selectedOption.area || current.selectedFloor !== selectedOption.floor) {
+          resetTable = true;
+        }
+      }
+
+      return {
+        ...current,
+        areaKey: selectedOption.key,
+        area: selectedOption.area,
+        selectedFloor: selectedOption.floor,
+        ...(resetTable
+          ? {
+              selectedTableNumber: null,
+              selectedTableCode: "",
+              description: current.description
+                .replace(/Lt\.\s*\d+\s*•\s*Meja:\s*\(?\d+\)?\s*\(?.*?\)?\s*\|\s*Kursi:\s*\(?\d+\)?/g, "")
+                .replace(/Meja:\s*\(?\d+\)?\s*\|\s*Kursi:\s*\(?\d+\)?/g, "")
+                .trim(),
+            }
+          : {}),
+      };
+    });
+    setModalSelectedTable(null);
+  };
+
   const getTableStatus = (tableNumber: number): "available" | "occupied" => {
     const found = liveTables.find((t) => t.table_number === tableNumber);
     return found ? found.status : "available";
   };
+
+  const currentHotspots = selectedFloor === 1 ? BLUEPRINT_TABLES_L1 : BLUEPRINT_TABLES_L2;
+  const currentFloorImage = selectedFloor === 1 ? "/assets/denahlokasicoffeshop.jpeg" : "/assets/denah_lantai_2.jpg";
 
   const handleSelectTableOnFloorPlan = (hotspot: TableHotspot) => {
     const tableStatus = getTableStatus(hotspot.number);
@@ -122,25 +217,32 @@ export default function ReservationSection() {
   };
 
   const confirmTableSelection = (hotspot: TableHotspot) => {
-    const tableTag = `Meja: ${hotspot.number} | Kursi: ${hotspot.capacity}`;
+    const tableTag = `Lt. ${selectedFloor} • Meja: ${hotspot.number} (${hotspot.code}) | Kursi: ${hotspot.capacity}`;
+
+    // Cari areaKey yang cocok
+    const matchedOpt = AREA_OPTIONS.find((opt) => opt.floor === selectedFloor && opt.area === hotspot.area);
+
     setForm((current) => {
-      // Bersihkan format lama
       const cleanDesc = current.description
         .replace(/\[Pilihan Meja:.*?\]/g, "")
         .replace(/\[Area:.*?\]/g, "")
+        .replace(/Lt\.\s*\d+\s*•\s*Meja:\s*\(?\d+\)?\s*\(?.*?\)?\s*\|\s*Kursi:\s*\(?\d+\)?/g, "")
         .replace(/Meja:\s*\(?\d+\)?\s*\|\s*Kursi:\s*\(?\d+\)?/g, "")
         .replace(/^[•\s-]+|[•\s-]+$/g, "")
         .trim();
 
       return {
         ...current,
+        areaKey: matchedOpt ? matchedOpt.key : current.areaKey,
         area: hotspot.area,
         guests: String(Math.min(hotspot.capacity, 10)),
         selectedTableNumber: hotspot.number,
         selectedTableCode: hotspot.code,
+        selectedFloor: selectedFloor,
         description: cleanDesc ? `${tableTag} • ${cleanDesc}` : tableTag,
       };
     });
+    setHighlightArea(hotspot.area);
     setShowFloorPlan(false);
   };
 
@@ -150,16 +252,17 @@ export default function ReservationSection() {
     setIsSubmitting(true);
 
     try {
-      // Format deskripsi: "Meja: 11 | Kursi: 2"
       let finalDescription = form.description.trim();
       if (form.selectedTableNumber) {
-        const tableHotspot = BLUEPRINT_TABLES.find((t) => t.number === form.selectedTableNumber);
+        const tableHotspot = ALL_BLUEPRINT_TABLES.find((t) => t.number === form.selectedTableNumber);
         const totalKursi = tableHotspot ? tableHotspot.capacity : form.guests;
-        const tableTag = `Meja: ${form.selectedTableNumber} | Kursi: ${totalKursi}`;
+        const floorInfo = form.selectedFloor ? `Lt. ${form.selectedFloor} • ` : "";
+        const tableTag = `${floorInfo}Meja: ${form.selectedTableNumber} | Kursi: ${totalKursi}`;
 
         const cleanDesc = finalDescription
           .replace(/\[Pilihan Meja:.*?\]/g, "")
           .replace(/\[Area:.*?\]/g, "")
+          .replace(/Lt\.\s*\d+\s*•\s*Meja:\s*\(?\d+\)?\s*\(?.*?\)?\s*\|\s*Kursi:\s*\(?\d+\)?/g, "")
           .replace(/Meja:\s*\(?\d+\)?\s*\|\s*Kursi:\s*\(?\d+\)?/g, "")
           .replace(/^[•\s-]+|[•\s-]+$/g, "")
           .trim();
@@ -188,9 +291,11 @@ export default function ReservationSection() {
         date: "",
         time: "",
         guests: "2",
+        areaKey: "L1-Indoor",
         area: "Indoor",
         selectedTableNumber: null,
         selectedTableCode: "",
+        selectedFloor: 1,
         description: "",
       });
       setModalSelectedTable(null);
@@ -201,14 +306,17 @@ export default function ReservationSection() {
     }
   };
 
-  const totalTables = BLUEPRINT_TABLES.length;
-  const occupiedCount = BLUEPRINT_TABLES.filter((h) => getTableStatus(h.number) === "occupied").length;
-  const availableCount = totalTables - occupiedCount;
+  const totalCurrentFloorTables = currentHotspots.length;
+  const occupiedCurrentFloorCount = currentHotspots.filter((h) => getTableStatus(h.number) === "occupied").length;
+  const availableCurrentFloorCount = totalCurrentFloorTables - occupiedCurrentFloorCount;
+
+  // Nama label area aktif
+  const currentAreaLabel = AREA_OPTIONS.find((opt) => opt.key === form.areaKey)?.label || `${form.area} (Lt. ${form.selectedFloor})`;
 
   return (
     <section id="Reservasi" className="py-20 px-4 sm:px-6 md:px-12 bg-white relative">
       <div className="max-w-3xl mx-auto">
-        {/* Header Bersih & Font Jelas */}
+        {/* Header */}
         <div className="text-center mb-10">
           <span className="text-sm font-bold uppercase tracking-widest text-slate-400">
             Booking & Reservasi Tempat
@@ -233,7 +341,7 @@ export default function ReservationSection() {
                 <input
                   required
                   type="text"
-                  placeholder="Contoh: Dandi Pratama"
+                  placeholder="Nama"
                   value={form.name}
                   onChange={(e) => updateField("name", e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-base text-slate-900 font-medium focus:outline-none focus:border-slate-800 focus:bg-white transition-all placeholder:text-slate-400"
@@ -246,7 +354,7 @@ export default function ReservationSection() {
                 <input
                   required
                   type="email"
-                  placeholder="nama@email.com"
+                  placeholder="Alamat Email"
                   value={form.email}
                   onChange={(e) => updateField("email", e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-base text-slate-900 font-medium focus:outline-none focus:border-slate-800 focus:bg-white transition-all placeholder:text-slate-400"
@@ -258,14 +366,15 @@ export default function ReservationSection() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div>
                 <label className="block text-sm font-bold text-slate-800 uppercase tracking-wider mb-2">
-                  Tanggal Kunjungan
+                  Tanggal Reservasi
                 </label>
                 <input
                   required
                   type="date"
+                  min={new Date().toISOString().split("T")[0]}
                   value={form.date}
                   onChange={(e) => updateField("date", e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-base text-slate-900 font-medium focus:outline-none focus:border-slate-800 focus:bg-white transition-all [color-scheme:light]"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-base text-slate-900 font-medium focus:outline-none focus:border-slate-800 focus:bg-white transition-all cursor-pointer"
                 />
               </div>
               <div>
@@ -277,75 +386,81 @@ export default function ReservationSection() {
                   type="time"
                   value={form.time}
                   onChange={(e) => updateField("time", e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-base text-slate-900 font-medium focus:outline-none focus:border-slate-800 focus:bg-white transition-all [color-scheme:light]"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-base text-slate-900 font-medium focus:outline-none focus:border-slate-800 focus:bg-white transition-all cursor-pointer"
                 />
               </div>
             </div>
 
-            {/* Baris 3: Jumlah Tamu & Pilihan Ruangan */}
+            {/* Baris 3: Jumlah Tamu & Pilihan Area */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div>
                 <label className="block text-sm font-bold text-slate-800 uppercase tracking-wider mb-2">
-                  Jumlah Tamu
+                  Jumlah Orang
                 </label>
                 <select
                   value={form.guests}
                   onChange={(e) => updateField("guests", e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-base text-slate-900 font-medium focus:outline-none focus:border-slate-800 focus:bg-white transition-all cursor-pointer"
                 >
-                  <option value="1">1 Orang</option>
-                  <option value="2">2 Orang</option>
-                  <option value="3">3 Orang</option>
-                  <option value="4">4 Orang</option>
-                  <option value="6">6 Orang</option>
-                  <option value="8">8 Orang</option>
-                  <option value="10">10+ Orang (Grup / Komunal)</option>
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+                    <option key={num} value={num}>
+                      {num} Orang
+                    </option>
+                  ))}
                 </select>
               </div>
 
               <div>
                 <label className="block text-sm font-bold text-slate-800 uppercase tracking-wider mb-2">
-                  Pilihan Area Ruangan
+                  Pilihan Area &amp; Suasana
                 </label>
                 <select
-                  value={form.area}
-                  onChange={(e) => updateField("area", e.target.value)}
+                  value={form.areaKey}
+                  onChange={(e) => handleAreaChange(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-base text-slate-900 font-medium focus:outline-none focus:border-slate-800 focus:bg-white transition-all cursor-pointer"
                 >
-                  <option value="Indoor">Indoor Lounge (Ber-AC & Sofa)</option>
-                  <option value="Outdoor">Outdoor / Patio (Taman Asri)</option>
-                  <option value="VIP">VIP Room (Privat & Kedap Suara)</option>
-                  <option value="Room Smoking">Smoking Area (Khusus Merokok)</option>
+                  <optgroup label="Lantai 1">
+                    <option value="L1-Indoor">Lantai 1 • Indoor AC Lounge</option>
+                    <option value="L1-VIP">Lantai 1 • VIP Room</option>
+                    <option value="L1-Smoking">Lantai 1 • Smoking Area</option>
+                    <option value="L1-Outdoor">Lantai 1 • Outdoor Garden</option>
+                  </optgroup>
+                  <optgroup label="Lantai 2">
+                    <option value="L2-VIP">Lantai 2 • VIP Meeting Room (M1)</option>
+                    <option value="L2-Indoor">Lantai 2 • Co-Working Lounge</option>
+                    <option value="L2-Smoking">Lantai 2 • Smoking Balcony</option>
+                    <option value="L2-Outdoor">Lantai 2 • Rooftop Terrace</option>
+                  </optgroup>
                 </select>
               </div>
             </div>
 
             {/* Tombol Buka Denah & Status Meja Terpilih */}
-            {form.selectedTableNumber ? (
-              <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="w-3.5 h-3.5 rounded-full bg-emerald-500 shrink-0"></span>
-                  <div>
-                    <p className="text-base font-bold text-slate-900">
-                      Meja: {form.selectedTableNumber} | Kursi: {form.guests}
-                    </p>
-                    <p className="text-xs text-slate-600 mt-0.5">
-                      Area: <strong>{form.area}</strong> • Status: <span className="text-emerald-700 font-bold">Tersedia</span>
-                    </p>
-                  </div>
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center shrink-0">
+                  <span className="material-symbols-outlined text-xl">map</span>
                 </div>
+                <div>
+                  <h4 className="text-sm font-bold text-slate-900">
+                    {form.selectedTableNumber ? (
+                      <span className="text-indigo-600">
+                        Meja #{form.selectedTableNumber} ({form.selectedTableCode}) Terpilih (Lt. {form.selectedFloor})
+                      </span>
+                    ) : (
+                      <span>Denah Otomatis: {currentAreaLabel}</span>
+                    )}
+                  </h4>
+                  <p className="text-xs text-slate-500">
+                    {form.selectedTableNumber
+                      ? `Area ${form.area} • Anda dapat mengganti pilihan meja kapan saja.`
+                      : `Denah akan langsung menampilkan area ${form.area} di Lantai ${form.selectedFloor}.`}
+                  </p>
+                </div>
+              </div>
 
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setModalSelectedTable(null);
-                      setShowFloorPlan(true);
-                    }}
-                    className="text-xs font-bold text-emerald-800 hover:text-emerald-950 underline"
-                  >
-                    Ganti Meja
-                  </button>
+              <div className="flex items-center gap-2">
+                {form.selectedTableNumber && (
                   <button
                     type="button"
                     onClick={() => {
@@ -354,42 +469,44 @@ export default function ReservationSection() {
                         selectedTableNumber: null,
                         selectedTableCode: "",
                         description: c.description
+                          .replace(/Lt\.\s*\d+\s*•\s*Meja:\s*\(?\d+\)?\s*\(?.*?\)?\s*\|\s*Kursi:\s*\(?\d+\)?/g, "")
                           .replace(/Meja:\s*\(?\d+\)?\s*\|\s*Kursi:\s*\(?\d+\)?/g, "")
-                          .replace(/^[•\s-]+|[•\s-]+$/g, "")
                           .trim(),
                       }));
+                      setModalSelectedTable(null);
                     }}
-                    className="text-xs font-bold text-rose-600 hover:text-rose-800"
+                    className="px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl border border-rose-200 transition-colors cursor-pointer"
                   >
-                    Hapus
+                    Reset Meja
                   </button>
-                </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    // Pastikan denah terbuka langsung pada lantai & area yang dipilih
+                    setSelectedFloor(form.selectedFloor);
+                    setHighlightArea(form.area);
+                    setShowFloorPlan(true);
+                  }}
+                  className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                >
+                  <span className="material-symbols-outlined text-base">near_me</span>
+                  <span>{form.selectedTableNumber ? "Ganti Meja" : "Buka Denah Meja"}</span>
+                </button>
               </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  setModalSelectedTable(null);
-                  setShowFloorPlan(true);
-                }}
-                className="w-full py-3.5 px-5 rounded-2xl border-2 border-dashed border-slate-300 hover:border-slate-800 text-slate-800 hover:bg-slate-50 text-sm font-bold flex items-center justify-center gap-2.5 transition-all bg-white shadow-xs"
-              >
-                <span className="material-symbols-outlined text-lg text-slate-700">map</span>
-                <span>Lihat Denah Tempat Duduk & Pilih Meja Sendiri</span>
-              </button>
-            )}
+            </div>
 
-            {/* Catatan Khusus */}
+            {/* Baris 4: Catatan Khusus */}
             <div>
               <label className="block text-sm font-bold text-slate-800 uppercase tracking-wider mb-2">
-                Catatan Khusus (Opsional)
+                Catatan / Permintaan Khusus
               </label>
               <textarea
                 rows={3}
-                placeholder="Permintaan khusus Anda (misal: kursi tambahan, dekorasi ulang tahun, dsb.)"
+                placeholder=""
                 value={form.description}
                 onChange={(e) => updateField("description", e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-base text-slate-900 font-medium focus:outline-none focus:border-slate-800 focus:bg-white transition-all placeholder:text-slate-400 resize-none"
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-base text-slate-900 font-medium focus:outline-none focus:border-slate-800 focus:bg-white transition-all placeholder:text-slate-400 resize-none"
               />
             </div>
 
@@ -398,7 +515,7 @@ export default function ReservationSection() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full sm:w-auto px-12 py-4 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold uppercase tracking-wider transition-all shadow-md"
+                className="w-full sm:w-auto px-12 py-4 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold uppercase tracking-wider transition-all shadow-md cursor-pointer disabled:opacity-50"
               >
                 {isSubmitting ? "Mengirim Reservasi..." : "Kirim Reservasi Sekarang"}
               </button>
@@ -409,39 +526,42 @@ export default function ReservationSection() {
       </div>
 
       {/* ========================================================================= */}
-      {/* MODAL POP-UP DENAH LOKASI - TEMA KETENANGAN (TENANG, BERSIH, TANPA BOLD)  */}
+      {/* MODAL POP-UP DENAH LOKASI - OTOMATIS TAMPILKAN AREA TERPILIH              */}
       {/* ========================================================================= */}
       {showFloorPlan && (
-        <div className="fixed inset-0 z-50 bg-stone-900/30 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-          <div className="bg-[#FAF9F6] border border-[#E7E5E0] rounded-3xl max-w-5xl w-full shadow-xl overflow-hidden my-auto text-[#2D2A26]">
-            {/* Header Modal - Nuansa Ketenangan & Kalem */}
-            <div className="px-6 sm:px-8 py-5 border-b border-[#EAE7E1] flex items-center justify-between bg-white/70">
+        <div className="fixed inset-0 z-50 bg-stone-900/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+          <div className="bg-[#FAF9F6] border border-[#E7E5E0] rounded-3xl max-w-5xl w-full shadow-2xl overflow-hidden my-auto text-[#2D2A26]">
+            {/* Header Modal */}
+            <div className="px-6 sm:px-8 py-5 border-b border-[#EAE7E1] flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/80">
               <div>
-                <h3 className="text-xl sm:text-2xl font-normal text-[#2D2A26] tracking-wide">
-                  Denah Tempat Duduk
+                <h3 className="text-xl sm:text-2xl font-bold text-[#2D2A26] tracking-tight flex items-center gap-2">
+                  <span>Denah Tempat Duduk Cafe</span>
+                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                    Fokus: {currentAreaLabel}
+                  </span>
                 </h3>
-                <p className="text-xs sm:text-sm text-[#7A7670] mt-1 font-normal">
-                  Pilih nomor meja yang Anda inginkan dengan menekan titik meja pada denah:
+                <p className="text-xs sm:text-sm text-[#7A7670] mt-0.5 font-normal">
+                  Meja pada area yang Anda pilih disorot khusus. Tekan meja untuk memilih:
                 </p>
               </div>
 
-              <div className="flex items-center gap-4">
-                <div className="text-xs sm:text-sm text-[#6E6A63] hidden sm:flex items-center gap-3 bg-[#F4F1EB] px-3.5 py-1.5 rounded-full border border-[#E4E0D7] font-normal">
-                  <span className="flex items-center gap-1.5 text-emerald-800">
+              <div className="flex items-center gap-3 self-end sm:self-auto">
+                <div className="text-xs sm:text-sm text-[#6E6A63] hidden md:flex items-center gap-3 bg-[#F4F1EB] px-3.5 py-1.5 rounded-full border border-[#E4E0D7]">
+                  <span className="flex items-center gap-1.5 text-emerald-800 font-semibold">
                     <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
-                    {availableCount} Tersedia
+                    {availableCurrentFloorCount} Tersedia (Lt. {selectedFloor})
                   </span>
                   <span className="text-[#C8C4BC]">|</span>
-                  <span className="flex items-center gap-1.5 text-[#8C7A54]">
+                  <span className="flex items-center gap-1.5 text-[#8C7A54] font-semibold">
                     <span className="w-2 h-2 rounded-full bg-[#C29D59]"></span>
-                    {occupiedCount} Terisi
+                    {occupiedCurrentFloorCount} Terisi
                   </span>
                 </div>
 
                 <button
                   type="button"
                   onClick={() => setShowFloorPlan(false)}
-                  className="w-8 h-8 rounded-full bg-[#EAE6DE] hover:bg-[#DDD8CF] text-[#55524E] flex items-center justify-center transition-colors"
+                  className="w-8 h-8 rounded-full bg-[#EAE6DE] hover:bg-[#DDD8CF] text-[#55524E] flex items-center justify-center transition-colors cursor-pointer"
                   title="Tutup"
                 >
                   <span className="material-symbols-outlined text-base">close</span>
@@ -449,22 +569,100 @@ export default function ReservationSection() {
               </div>
             </div>
 
+            {/* Floor Switcher Bar */}
+            <div className="px-6 sm:px-8 py-3.5 bg-[#F4F1EB] border-b border-[#EAE7E1] flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-2 bg-white/80 p-1 rounded-2xl border border-[#E3DEC]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedFloor(1);
+                    setModalSelectedTable(null);
+                  }}
+                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                    selectedFloor === 1
+                      ? "bg-slate-900 text-white shadow-xs"
+                      : "text-[#6E6A63] hover:text-[#2D2A26] hover:bg-black/5"
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-base">foundation</span>
+                  <span>Lantai 1 • Utama &amp; Outdoor</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedFloor(2);
+                    setModalSelectedTable(null);
+                  }}
+                  className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                    selectedFloor === 2
+                      ? "bg-slate-900 text-white shadow-xs"
+                      : "text-[#6E6A63] hover:text-[#2D2A26] hover:bg-black/5"
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-base">roofing</span>
+                  <span>Lantai 2 • VIP Meeting &amp; Rooftop</span>
+                </button>
+              </div>
+
+              <div className="text-xs text-[#7A756D] font-medium hidden md:block">
+                {selectedFloor === 1
+                  ? "Area: VIP Room, Smoking Room, Indoor Lounge, Outdoor Garden"
+                  : "Area: VIP Meeting Room, Smoking Balcony, Co-Working Lounge, Rooftop Terrace"}
+              </div>
+            </div>
+
+            {/* Sorot Area Bar (Tepat Dibawah Border Lantai 1 atau 2) */}
+            <div className="px-6 sm:px-8 py-2.5 bg-white/90 border-b border-[#EAE7E1] flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs text-[#7A756D] font-bold uppercase tracking-wider flex items-center gap-1">
+                  <span className="material-symbols-outlined text-sm text-indigo-600">filter_alt</span>
+                  Sorot Area:
+                </span>
+                {[
+                  { id: "all", label: "Semua Area" },
+                  { id: "VIP", label: "VIP Room" },
+                  { id: "Indoor", label: "Indoor AC" },
+                  { id: "Room Smoking", label: "Smoking Area" },
+                  { id: "Outdoor", label: "Outdoor" },
+                ].map((a) => (
+                  <button
+                    key={a.id}
+                    type="button"
+                    onClick={() => setHighlightArea(a.id)}
+                    className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                      highlightArea === a.id
+                        ? "bg-indigo-600 text-white shadow-xs"
+                        : "bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200"
+                    }`}
+                  >
+                    {a.label}
+                  </button>
+                ))}
+              </div>
+
+              <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">
+                *Meja area yang disorot akan bercahaya / ber-border tebal di denah
+              </span>
+            </div>
+
             {/* Body Denah */}
-            <div className="p-6 sm:p-8 space-y-6 max-h-[75vh] overflow-y-auto">
+            <div className="p-6 sm:p-8 space-y-6 max-h-[70vh] overflow-y-auto">
               {/* Bingkai Gambar Denah Serene */}
               <div className="relative rounded-2xl overflow-hidden border border-[#E2DDD5] bg-white shadow-xs">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="/assets/denahlokasicoffeshop.jpeg"
-                  alt="Denah Lokasi Coffee Shop"
+                  src={currentFloorImage}
+                  alt={`Denah Lantai ${selectedFloor} Coffee Shop`}
                   className="w-full h-auto block select-none pointer-events-none"
                 />
 
-                {/* OVERLAY TITIK MEJA DENGAN UKURAN BORDER SERAGAM */}
-                {BLUEPRINT_TABLES.map((hotspot) => {
+                {/* OVERLAY TITIK MEJA SESUAI LANTAI AKTIF */}
+                {currentHotspots.map((hotspot) => {
                   const tableStatus = getTableStatus(hotspot.number);
                   const isOccupied = tableStatus === "occupied";
                   const isSelected = modalSelectedTable?.number === hotspot.number;
+                  const isAreaMatched = highlightArea === "all" || hotspot.area === highlightArea;
 
                   return (
                     <div
@@ -474,37 +672,38 @@ export default function ReservationSection() {
                         left: `${hotspot.x}%`,
                         top: `${hotspot.y}%`,
                       }}
-                      className="absolute -translate-x-1/2 -translate-y-1/2 z-20 select-none cursor-pointer"
+                      className={`absolute -translate-x-1/2 -translate-y-1/2 z-20 select-none cursor-pointer transition-opacity duration-200 ${
+                        isAreaMatched ? "opacity-100 scale-100" : "opacity-40 hover:opacity-90"
+                      }`}
                       title={
                         isOccupied
                           ? `Meja #${hotspot.number} (${hotspot.code}) - Sedang Terisi`
-                          : `Meja #${hotspot.number} (${hotspot.code}) - Tersedia (${hotspot.capacity} Kursi)`
+                          : `Meja #${hotspot.number} (${hotspot.code}) - Area ${hotspot.area} - Tersedia (${hotspot.capacity} Kursi)`
                       }
                     >
-                      {/* Box Border dengan Ukuran Seragam di Setiap Nomor Meja */}
                       <div
                         className={`w-[48px] h-[34px] sm:w-[58px] sm:h-[40px] rounded-xl border flex flex-col items-center justify-center transition-all duration-200 shadow-2xs ${
                           isSelected
                             ? "bg-white border-[#2D2A26] ring-2 ring-[#2D2A26]/30 shadow-md scale-105"
                             : isOccupied
                             ? "bg-[#F7F2E7]/95 border-[#DFD7CA] cursor-not-allowed opacity-85"
+                            : isAreaMatched
+                            ? "bg-white border-indigo-400 ring-2 ring-indigo-500/20 hover:border-indigo-600 hover:scale-105 shadow-xs"
                             : "bg-white/95 border-[#D5CFC5] hover:border-[#2D2A26] hover:scale-105"
                         }`}
                       >
-                        {/* Baris 1: Titik Bulat + Kode Meja (persis seperti contoh gambar) */}
                         <div className="flex items-center gap-1 leading-none">
                           <span
                             className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                              isOccupied ? "bg-[#C29D59]" : "bg-emerald-600"
+                              isOccupied ? "bg-[#C29D59]" : isAreaMatched ? "bg-indigo-600" : "bg-emerald-600"
                             }`}
                           />
-                          <span className="text-[11px] sm:text-xs font-normal text-[#2D2A26] tracking-tight">
+                          <span className="text-[11px] sm:text-xs font-bold text-[#2D2A26] tracking-tight">
                             {hotspot.code}
                           </span>
                         </div>
 
-                        {/* Baris 2: Jumlah Kursi di bawahnya */}
-                        <span className="text-[9px] sm:text-[10px] font-normal text-[#6E6A63] leading-none mt-1">
+                        <span className="text-[9px] sm:text-[10px] font-medium text-[#6E6A63] leading-none mt-1">
                           {isOccupied ? "Terisi" : `${hotspot.capacity} Kursi`}
                         </span>
                       </div>
@@ -513,17 +712,17 @@ export default function ReservationSection() {
                 })}
               </div>
 
-              {/* Bar Konfirmasi Meja Terpilih - Halus & Rapi */}
+              {/* Bar Konfirmasi Meja Terpilih */}
               {modalSelectedTable ? (
                 <div className="p-4 sm:p-5 rounded-2xl bg-white border border-[#E0DBD2] flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
                   <div className="flex items-center gap-3">
                     <span className="w-3.5 h-3.5 rounded-full bg-emerald-500 shrink-0"></span>
                     <div>
                       <h4 className="text-base sm:text-lg font-bold text-[#2D2A26]">
-                        Meja: {modalSelectedTable.number} | Kursi: {modalSelectedTable.capacity}
+                        Lt. {selectedFloor} • Meja {modalSelectedTable.number} ({modalSelectedTable.code}) | {modalSelectedTable.capacity} Kursi
                       </h4>
                       <p className="text-xs sm:text-sm text-[#736F68] mt-0.5 font-normal">
-                        Area: {modalSelectedTable.area} • Status: Tersedia
+                        Area: {modalSelectedTable.area} • Deskripsi: {modalSelectedTable.description} • Status: Tersedia
                       </p>
                     </div>
                   </div>
@@ -532,134 +731,103 @@ export default function ReservationSection() {
                     <button
                       type="button"
                       onClick={() => setModalSelectedTable(null)}
-                      className="px-4 py-2 text-xs sm:text-sm text-[#736F68] hover:text-[#2D2A26] font-normal transition-colors"
+                      className="px-4 py-2 text-xs sm:text-sm text-[#736F68] hover:text-[#2D2A26] font-semibold transition-colors cursor-pointer"
                     >
                       Pilih Lainnya
                     </button>
                     <button
                       type="button"
                       onClick={() => confirmTableSelection(modalSelectedTable)}
-                      className="px-5 py-2.5 rounded-xl bg-[#2D2A26] hover:bg-[#403C37] text-white text-xs sm:text-sm font-normal transition-colors shadow-2xs"
+                      className="px-5 py-2.5 rounded-xl bg-[#2D2A26] hover:bg-[#403C37] text-white text-xs sm:text-sm font-bold transition-colors shadow-2xs cursor-pointer"
                     >
                       Gunakan Meja Ini
                     </button>
                   </div>
                 </div>
               ) : (
-                <p className="text-xs sm:text-sm text-center text-[#7A756D] py-1 font-normal">
-                  Tekan meja putih di atas denah untuk memilih tempat duduk Anda.
+                <p className="text-xs sm:text-sm text-center text-[#7A756D] py-1 font-medium">
+                  Menampilkan meja di <strong className="text-slate-900 font-bold">{currentAreaLabel}</strong>. Tekan meja yang disorot untuk memilih.
                 </p>
               )}
 
-              {/* Panduan Keterangan 3 Kolom - Nuansa Ketenangan, Halus, Tanpa Bold */}
+              {/* Panduan Keterangan 3 Kolom */}
               <div className="bg-[#F8F6F1] border border-[#E5E0D7] rounded-2xl p-5 space-y-4">
                 <div className="flex items-center gap-2 pb-3 border-b border-[#E6E1D8]">
                   <span className="material-symbols-outlined text-base text-[#7A756D]">
                     info
                   </span>
-                  <h4 className="text-xs sm:text-sm font-normal text-[#47433E] uppercase tracking-wider">
-                    Panduan &amp; Keterangan Denah Meja
+                  <h4 className="text-xs sm:text-sm font-bold text-[#47433E] uppercase tracking-wider">
+                    Panduan &amp; Keterangan Denah Meja (Lantai 1 &amp; Lantai 2)
                   </h4>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {/* Kolom 1: Status Meja */}
                   <div className="bg-white p-4 sm:p-5 rounded-2xl border border-[#E5E1D8] shadow-2xs">
-                    <p className="text-xs text-[#7A756D] uppercase tracking-wider mb-3 font-normal">
+                    <p className="text-xs text-[#7A756D] uppercase tracking-wider mb-3 font-bold">
                       1. Status Ketersediaan
                     </p>
                     <div className="space-y-2.5">
                       <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-[#FAF8F5] border border-[#ECE8E0]">
                         <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 shrink-0 mt-1"></span>
                         <div>
-                          <p className="text-sm text-[#2D2A26] font-normal">Meja Putih (Tersedia)</p>
-                          <p className="text-xs text-[#7A756D] mt-0.5 font-normal">Meja kosong dan siap Anda pilih.</p>
+                          <p className="text-sm text-[#2D2A26] font-bold">Meja Putih (Tersedia)</p>
+                          <p className="text-xs text-[#7A756D] mt-0.5">Meja kosong dan siap Anda pilih.</p>
                         </div>
                       </div>
 
-                      <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-[#F6F1E8] border border-[#E3DC CE]">
+                      <div className="flex items-start gap-2.5 p-2.5 rounded-xl bg-[#F6F1E8] border border-[#E3DCCE]">
                         <span className="w-2.5 h-2.5 rounded-full bg-[#C29D59] shrink-0 mt-1"></span>
                         <div>
-                          <p className="text-sm text-[#61543E] font-normal">Meja Kuning Muda (Terisi)</p>
-                          <p className="text-xs text-[#8A795F] mt-0.5 font-normal">Sedang digunakan pelanggan lain.</p>
+                          <p className="text-sm text-[#61543E] font-bold">Meja Kuning Muda (Terisi)</p>
+                          <p className="text-xs text-[#8A795F] mt-0.5">Sedang digunakan pelanggan lain.</p>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Kolom 2: Kapasitas Kursi */}
+                  {/* Kolom 2: Area Lantai */}
                   <div className="bg-white p-4 sm:p-5 rounded-2xl border border-[#E5E1D8] shadow-2xs">
-                    <p className="text-xs text-[#7A756D] uppercase tracking-wider mb-2 font-normal">
-                      2. Kapasitas Kursi
+                    <p className="text-xs text-[#7A756D] uppercase tracking-wider mb-2 font-bold">
+                      2. Pilihan Lantai &amp; Suasana
                     </p>
-                    <p className="text-xs sm:text-sm text-[#5F5B55] mb-3 leading-relaxed font-normal">
-                      Keterangan &ldquo;Kursi&rdquo; menunjukkan kapasitas jumlah orang yang dapat ditampung meja, bukan harga meja.
-                    </p>
-
-                    <div className="bg-[#FAF8F5] p-3 rounded-xl border border-[#ECE8E0] space-y-1.5 text-xs sm:text-[13px] text-[#4A4742] font-normal">
-                      <div className="flex items-center justify-between py-0.5 border-b border-[#E9E4DC]">
-                        <span>• Meja 2 Kursi</span>
-                        <span className="text-[#7A756D]">Maksimal 2 orang</span>
+                    <div className="bg-[#FAF8F5] p-3 rounded-xl border border-[#ECE8E0] space-y-2 text-xs text-[#4A4742]">
+                      <div className="py-0.5 border-b border-[#E9E4DC]">
+                        <p className="font-bold text-[#2D2A26]">Lantai 1:</p>
+                        <p className="text-[#7A756D] mt-0.5">VIP Room, Indoor AC, Smoking Room, &amp; Outdoor Garden</p>
                       </div>
-                      <div className="flex items-center justify-between py-0.5 border-b border-[#E9E4DC]">
-                        <span>• Meja 4 Kursi</span>
-                        <span className="text-[#7A756D]">Maksimal 4 orang</span>
-                      </div>
-                      <div className="flex items-center justify-between py-0.5 border-b border-[#E9E4DC]">
-                        <span>• Meja 6 Kursi</span>
-                        <span className="text-[#7A756D]">Maksimal 6 orang</span>
-                      </div>
-                      <div className="flex items-center justify-between py-0.5 border-b border-[#E9E4DC]">
-                        <span>• Meja 8 Kursi</span>
-                        <span className="text-[#7A756D]">Maksimal 8 orang</span>
-                      </div>
-                      <div className="flex items-center justify-between py-0.5">
-                        <span>• Meja 10 Kursi</span>
-                        <span className="text-[#7A756D]">Maksimal 10 orang</span>
+                      <div className="py-0.5">
+                        <p className="font-bold text-[#2D2A26]">Lantai 2:</p>
+                        <p className="text-[#7A756D] mt-0.5">VIP Meeting (M1), Co-Working Pods, Balcony, &amp; Rooftop Terrace</p>
                       </div>
                     </div>
                   </div>
 
                   {/* Kolom 3: Cara Pemilihan */}
                   <div className="bg-white p-4 sm:p-5 rounded-2xl border border-[#E5E1D8] shadow-2xs">
-                    <p className="text-xs text-[#7A756D] uppercase tracking-wider mb-2.5 font-normal">
+                    <p className="text-xs text-[#7A756D] uppercase tracking-wider mb-2.5 font-bold">
                       3. Cara Memilih Meja
                     </p>
-                    <div className="space-y-2.5 text-xs sm:text-sm text-[#54504A] font-normal">
-                      <div className="flex items-start gap-2.5">
-                        <span className="w-5 h-5 rounded-full bg-[#E5E0D6] text-[#44403B] flex items-center justify-center text-[11px] shrink-0 mt-0.5 font-normal">
+                    <div className="space-y-2 text-xs text-[#54504A]">
+                      <div className="flex items-start gap-2">
+                        <span className="w-4 h-4 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px] shrink-0 mt-0.5 font-bold">
                           1
                         </span>
-                        <span className="leading-snug">
-                          Pilih meja berwarna putih pada denah meja.
-                        </span>
+                        <span>Pilih area suasana yang Anda sukai di formulir atau tab lantai.</span>
                       </div>
 
-                      <div className="flex items-start gap-2.5">
-                        <span className="w-5 h-5 rounded-full bg-[#E5E0D6] text-[#44403B] flex items-center justify-center text-[11px] shrink-0 mt-0.5 font-normal">
+                      <div className="flex items-start gap-2">
+                        <span className="w-4 h-4 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px] shrink-0 mt-0.5 font-bold">
                           2
                         </span>
-                        <span className="leading-snug">
-                          Klik meja yang ingin digunakan.
-                        </span>
+                        <span>Denah otomatis menyesuaikan ke lantai &amp; menyorot meja di area tersebut.</span>
                       </div>
 
-                      <div className="flex items-start gap-2.5">
-                        <span className="w-5 h-5 rounded-full bg-[#E5E0D6] text-[#44403B] flex items-center justify-center text-[11px] shrink-0 mt-0.5 font-normal">
+                      <div className="flex items-start gap-2">
+                        <span className="w-4 h-4 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px] shrink-0 mt-0.5 font-bold">
                           3
                         </span>
-                        <span className="leading-snug">
-                          Periksa informasi kapasitas meja.
-                        </span>
-                      </div>
-
-                      <div className="flex items-start gap-2.5">
-                        <span className="w-5 h-5 rounded-full bg-[#E5E0D6] text-[#44403B] flex items-center justify-center text-[11px] shrink-0 mt-0.5 font-normal">
-                          4
-                        </span>
-                        <span className="leading-snug">
-                          Klik tombol &ldquo;Gunakan Meja Ini&rdquo; untuk mengonfirmasi pilihan.
-                        </span>
+                        <span>Klik nomor meja dan tekan &ldquo;Gunakan Meja Ini&rdquo;.</span>
                       </div>
                     </div>
                   </div>
@@ -667,12 +835,12 @@ export default function ReservationSection() {
               </div>
             </div>
 
-            {/* Footer Modal Bersih & Kalem */}
-            <div className="px-6 sm:px-8 py-4 border-t border-[#EAE7E1] bg-white/70 flex justify-end">
+            {/* Footer Modal */}
+            <div className="px-6 sm:px-8 py-4 border-t border-[#EAE7E1] bg-white/80 flex justify-end">
               <button
                 type="button"
                 onClick={() => setShowFloorPlan(false)}
-                className="px-5 py-2 rounded-xl bg-[#EBE7DF] hover:bg-[#DCD7CD] text-[#4A4742] text-xs sm:text-sm font-normal transition-colors"
+                className="px-5 py-2 rounded-xl bg-[#EBE7DF] hover:bg-[#DCD7CD] text-[#4A4742] text-xs sm:text-sm font-semibold transition-colors cursor-pointer"
               >
                 Tutup
               </button>

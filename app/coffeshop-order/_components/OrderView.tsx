@@ -18,6 +18,7 @@ interface OrderViewProps {
 export default function OrderView({ tableId }: OrderViewProps) {
   const [step, setStep] = useState<'form' | 'menu'>('form');
   const [customerName, setCustomerName] = useState('');
+  const [customerId, setCustomerId] = useState<number>(0);
   const [tableNumber, setTableNumber] = useState(tableId);
   const [tableDatabaseId, setTableDatabaseId] = useState(0);
   const [seatingArea, setSeatingArea] = useState('Indoor');
@@ -28,7 +29,9 @@ export default function OrderView({ tableId }: OrderViewProps) {
   useEffect(() => {
     const savedName = localStorage.getItem('order_customerName');
     const savedStep = localStorage.getItem('order_step');
+    const savedCustId = localStorage.getItem('order_customerId');
     if (savedName) setCustomerName(savedName);
+    if (savedCustId) setCustomerId(Number(savedCustId) || 0);
     if (savedStep === 'menu') setStep('menu');
   }, []);
 
@@ -73,6 +76,7 @@ export default function OrderView({ tableId }: OrderViewProps) {
       const result = await response.json();
       const customer = result.data;
       if (customer && customer.id) {
+        setCustomerId(Number(customer.id));
         localStorage.setItem('order_customerId', String(customer.id));
       }
       
@@ -89,6 +93,7 @@ export default function OrderView({ tableId }: OrderViewProps) {
       <div className={montserrat.className}>
         <OrderMenu
           customerName={customerName}
+          customerId={customerId}
           tableNumber={tableNumber}
           tableDatabaseId={tableDatabaseId}
           seatingArea={seatingArea}

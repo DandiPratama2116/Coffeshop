@@ -12,16 +12,18 @@ interface CartItem {
 interface PaymentViewProps {
   totalAmount: number;
   customerName: string;
+  customerId?: number;
   tableId: number;
   cart: CartItem[];
   promoCode?: string;
   promoId?: number;
   discountAmount?: number;
+  taxPercent?: number;
   onBack: () => void;
   onPaySuccess: (orderId: number) => void;
 }
 
-export default function PaymentView({ totalAmount, customerName, tableId, cart, promoCode, promoId, discountAmount, onBack, onPaySuccess }: PaymentViewProps) {
+export default function PaymentView({ totalAmount, customerName, customerId, tableId, cart, promoCode, promoId, discountAmount, taxPercent = 0, onBack, onPaySuccess }: PaymentViewProps) {
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -52,7 +54,7 @@ export default function PaymentView({ totalAmount, customerName, tableId, cart, 
     if (!selectedMethod) return;
     setIsProcessing(true);
     try {
-      const customerId = Number(localStorage.getItem('order_customerId')) || 0;
+      const finalCustomerId = customerId || Number(localStorage.getItem('order_customerId')) || 0;
       const promoCartItem = cart.find(c => c.item.category === 'Promo');
       const calculatedDiscount = discountAmount || (promoCartItem && promoCartItem.item.originalPrice && promoCartItem.item.originalPrice > promoCartItem.item.price ? (promoCartItem.item.originalPrice - promoCartItem.item.price) * promoCartItem.quantity : 0);
 
@@ -60,7 +62,7 @@ export default function PaymentView({ totalAmount, customerName, tableId, cart, 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          customer_id: customerId,
+          customer_id: finalCustomerId,
           customer_name: customerName,
           table_id: tableId,
           total_amount: totalAmount,
@@ -131,6 +133,11 @@ export default function PaymentView({ totalAmount, customerName, tableId, cart, 
           <span className="text-3xl font-extrabold text-white tracking-tight relative z-10 drop-shadow-sm">
             Rp {totalAmount.toLocaleString('id-ID')}
           </span>
+          {taxPercent > 0 && (
+            <span className="text-white/80 text-[11px] font-medium mt-1 relative z-10 bg-black/10 px-2.5 py-0.5 rounded-full">
+              Termasuk Pajak Restoran {taxPercent}%
+            </span>
+          )}
         </div>
 
         {/* Payment Methods */}

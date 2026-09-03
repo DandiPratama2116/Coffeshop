@@ -7,16 +7,18 @@ import { MenuItem } from '../_data/menuData';
 interface CartViewProps {
   cart: { item: MenuItem; quantity: number }[];
   setCart: React.Dispatch<React.SetStateAction<{ item: MenuItem; quantity: number }[]>>;
+  taxPercent?: number;
   onBack: () => void;
   onCheckout: () => void;
 }
 
-export default function CartView({ cart, setCart, onBack, onCheckout }: CartViewProps) {
+export default function CartView({ cart, setCart, taxPercent = 0, onBack, onCheckout }: CartViewProps) {
   const subTotal = cart.reduce((acc, curr) => acc + (curr.item.price * curr.quantity), 0);
   const deliveryFee = 2500;
   const adminFee = 2000;
+  const taxAmount = Math.round((subTotal * taxPercent) / 100);
   
-  const total = subTotal + deliveryFee + adminFee;
+  const total = subTotal + deliveryFee + adminFee + taxAmount;
 
   const updateQuantity = (id: string, delta: number) => {
     setCart(prev => {
@@ -155,9 +157,15 @@ export default function CartView({ cart, setCart, onBack, onCheckout }: CartView
             <span>Biaya Admin</span>
             <span>Rp {adminFee.toLocaleString('id-ID')}</span>
           </div>
-          <div className="flex justify-between text-stone-800 font-bold pt-3 border-t border-gray-200">
-            <span>Total</span>
-            <span>Rp {total.toLocaleString('id-ID')}</span>
+          {taxPercent > 0 && (
+            <div className="flex justify-between text-stone-600 font-medium">
+              <span>Pajak Restoran ({taxPercent}%)</span>
+              <span>Rp {taxAmount.toLocaleString('id-ID')}</span>
+            </div>
+          )}
+          <div className="flex justify-between text-stone-800 font-bold pt-3 border-t border-gray-200 text-base">
+            <span>Total Pembayaran</span>
+            <span className="text-amber-700">Rp {total.toLocaleString('id-ID')}</span>
           </div>
         </div>
       </div>
