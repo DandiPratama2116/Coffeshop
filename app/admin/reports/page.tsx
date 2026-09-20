@@ -14,6 +14,8 @@ interface OrderItem {
 interface Transaction {
   id: string;
   tableId: string;
+  customerName?: string;
+  discountAmount?: number;
   total: number;
   items: OrderItem[];
   status?: string;
@@ -142,6 +144,8 @@ export default function AdminReportsPage() {
           return {
             id: `ORD-${o.id}`,
             tableId: String(o.table_id || "1"),
+            customerName: o.customer_name || (o.customer ? o.customer.name : `Pelanggan`),
+            discountAmount: Number(o.discount_amount) || 0,
             total: Number(o.total_amount || 0),
             items,
             status: o.status || "completed",
@@ -151,6 +155,7 @@ export default function AdminReportsPage() {
             rawDate,
           };
         });
+        liveList.sort((a, b) => b.rawDate.getTime() - a.rawDate.getTime());
       }
 
       // Gabungkan dengan localStorage demo jika ada
@@ -798,17 +803,29 @@ export default function AdminReportsPage() {
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
-            {filteredTransactions.slice(0, 8).map((transaction) => (
+            {filteredTransactions.slice(0, 8).map((transaction, idx) => (
               <div
                 key={transaction.id}
                 className="px-6 py-4 flex items-center justify-between gap-4 hover:bg-slate-50/60 transition-colors"
               >
                 <div className="flex items-center gap-3.5 min-w-0">
                   <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-[#3B4CB8] font-bold text-xs flex items-center justify-center shrink-0">
-                    #{transaction.tableId}
+                    #{idx + 1}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-slate-800 text-sm font-bold">{transaction.id}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-slate-900 text-sm font-bold">{transaction.id}</p>
+                      {transaction.customerName && (
+                        <span className="text-[11px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md">
+                          {transaction.customerName}
+                        </span>
+                      )}
+                      {transaction.discountAmount && transaction.discountAmount > 0 ? (
+                        <span className="text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded">
+                          🏷️ -Rp {transaction.discountAmount.toLocaleString("id-ID")}
+                        </span>
+                      ) : null}
+                    </div>
                     <p className="text-slate-400 text-xs mt-0.5 truncate">
                       Meja {transaction.tableId} <span className="text-slate-300">•</span>{" "}
                       {transaction.items.length} item <span className="text-slate-300">•</span>{" "}

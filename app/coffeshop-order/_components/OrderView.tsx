@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import OrderMenu from './OrderMenu';
 import { Montserrat } from 'next/font/google';
+import { getApiBase } from '@/app/_utils/api';
 
 const montserrat = Montserrat({
   subsets: ['latin', 'cyrillic-ext'],
@@ -18,37 +19,63 @@ interface OrderViewProps {
 export default function OrderView({ tableId }: OrderViewProps) {
   const [step, setStep] = useState<'form' | 'menu'>('form');
   const [customerName, setCustomerName] = useState('');
+  const [customerId, setCustomerId] = useState<number>(0);
   const [tableNumber, setTableNumber] = useState(tableId);
-  const [tableDatabaseId, setTableDatabaseId] = useState(0);
+  const [tableDatabaseId, setTableDatabaseId] = useState(Number(tableId) || 1);
   const [seatingArea, setSeatingArea] = useState('Indoor');
   const [tableStatus, setTableStatus] = useState<'loading' | 'available' | 'occupied' | 'missing'>('loading');
   const [tableError, setTableError] = useState('');
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+  const apiBase = getApiBase();
 
   useEffect(() => {
+    const savedTable = localStorage.getItem('order_tableNumber');
     const savedName = localStorage.getItem('order_customerName');
     const savedStep = localStorage.getItem('order_step');
-    if (savedName) setCustomerName(savedName);
-    if (savedStep === 'menu') setStep('menu');
-  }, []);
+    const savedCustId = localStorage.getItem('order_customerId');
+
+    // If scanning the same table as before and was on menu, preserve session
+    if (savedTable === tableId) {
+      if (savedName) setCustomerName(savedName);
+      if (savedCustId) setCustomerId(Number(savedCustId) || 0);
+      if (savedStep === 'menu') setStep('menu');
+    } else {
+      // Scanned a new/different table: update table and reset order step
+      localStorage.setItem('order_tableNumber', tableId);
+      localStorage.removeItem('order_step');
+      localStorage.removeItem('order_cart');
+      localStorage.removeItem('order_createdOrderId');
+      if (savedName) setCustomerName(savedName);
+    }
+  }, [tableId]);
 
   useEffect(() => {
     let cancelled = false;
+    setTableStatus('loading');
+    
     fetch(`${apiBase}/customer/tables/number/${encodeURIComponent(tableId)}`)
       .then(response => response.ok ? response.json() : Promise.reject(new Error('Meja tidak ditemukan')))
       .then(result => {
         if (cancelled) return;
         const table = result.data;
-        if (!table || !['available', 'occupied'].includes(table.status)) throw new Error('Status meja tidak valid');
-        setTableNumber(String(table.table_number));
-        setTableDatabaseId(Number(table.id));
-        setTableStatus(table.status);
-        setSeatingArea(table.seating_area || 'Indoor');
+        if (table) {
+          setTableNumber(String(table.table_number || tableId));
+          setTableDatabaseId(Number(table.id) || Number(tableId) || 1);
+          setTableStatus(table.status || 'available');
+          setSeatingArea(table.seating_area || 'Indoor');
+        } else {
+          setTableNumber(String(tableId));
+          setTableDatabaseId(Number(tableId) || 1);
+          setTableStatus('available');
+          setSeatingArea('Indoor');
+        }
       })
-      .catch((error: unknown) => {
+      .catch(() => {
         if (cancelled) return;
-        setTableStatus('missing');
-        setTableError(error instanceof Error ? error.message : 'Gagal terhubung ke database meja');
+        // Fallback gracefully so customer can still order even if table not yet in DB
+        setTableNumber(String(tableId));
+        setTableDatabaseId(Number(tableId) || 1);
+        setTableStatus('available');
+        setSeatingArea('Indoor');
       });
     return () => { cancelled = true; };
   }, [apiBase, tableId]);
@@ -73,6 +100,7 @@ export default function OrderView({ tableId }: OrderViewProps) {
       const result = await response.json();
       const customer = result.data;
       if (customer && customer.id) {
+        setCustomerId(Number(customer.id));
         localStorage.setItem('order_customerId', String(customer.id));
       }
       
@@ -89,6 +117,7 @@ export default function OrderView({ tableId }: OrderViewProps) {
       <div className={montserrat.className}>
         <OrderMenu
           customerName={customerName}
+          customerId={customerId}
           tableNumber={tableNumber}
           tableDatabaseId={tableDatabaseId}
           seatingArea={seatingArea}

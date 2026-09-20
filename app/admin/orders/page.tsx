@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 
 interface OrderItem {
   name: string;
@@ -53,6 +54,17 @@ const STATUS_NEXT_LABEL: Record<Order["status"], string> = {
 };
 
 export default function AdminOrdersPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-slate-400 font-medium">Memuat antrean pesanan...</div>}>
+      <AdminOrdersContent />
+    </Suspense>
+  );
+}
+
+function AdminOrdersContent() {
+  const searchParams = useSearchParams();
+  const targetOrderId = searchParams.get("orderId") || searchParams.get("id");
+
   const [orders, setOrders] = useState<Order[]>([]);
   const [filter, setFilter] = useState<"all" | Order["status"]>("all");
   const [selected, setSelected] = useState<Order | null>(null);
@@ -100,7 +112,14 @@ export default function AdminOrdersPage() {
             time: new Date(o.created_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }),
           };
         });
+        mapped.sort((a: any, b: any) => Number(b.id) - Number(a.id));
         setOrders(mapped);
+        if (targetOrderId) {
+          const match = mapped.find((o: any) => o.id === targetOrderId);
+          if (match) {
+            setSelected(match);
+          }
+        }
       }
     } catch (err: any) {
       if (err.message !== "Failed to fetch" && err.name !== "TypeError") {
@@ -111,9 +130,19 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     fetchOrders();
-    const interval = setInterval(fetchOrders, 8000);
+    const interval = setInterval(fetchOrders, 3000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (targetOrderId && orders.length > 0) {
+      const match = orders.find(o => o.id === targetOrderId);
+      if (match) {
+        setSelected(match);
+        setFilter("all");
+      }
+    }
+  }, [targetOrderId, orders]);
 
   const updateStatus = async (id: string) => {
     const order = orders.find(o => o.id === id);
@@ -237,15 +266,18 @@ export default function AdminOrdersPage() {
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className={`text-sm font-bold ${isSelected ? "text-white" : "text-slate-900"}`}>
-                            Pesanan #{order.id}
+                            {order.customerName || `Pesanan #${order.id}`}
                           </p>
+                          <span className={`text-[10px] font-medium ${isSelected ? "text-slate-300" : "text-slate-400"}`}>
+                            • {order.time}
+                          </span>
                           {order.discountAmount > 0 && (
                             <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md ${
                               isSelected
                                 ? "bg-amber-400/20 text-amber-300 border border-amber-400/30"
                                 : "bg-amber-50 text-amber-800 border border-amber-200"
                             }`}>
-                              🏷️ Promo -Rp {order.discountAmount.toLocaleString("id-ID")}
+                              🏷️ -Rp {order.discountAmount.toLocaleString("id-ID")}
                             </span>
                           )}
                         </div>
@@ -299,7 +331,7 @@ export default function AdminOrdersPage() {
               {/* Detail Header */}
               <div className="px-6 py-4 bg-slate-50 border-b border-slate-100 flex items-start justify-between gap-2">
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">Pesanan #{selected.id}</h3>
+                  <h3 className="text-base font-bold text-slate-900">{selected.customerName || `Pesanan #${selected.id}`}</h3>
                   <p className="text-sm text-slate-500 mt-0.5">Meja {selected.tableId} • Pukul {selected.time}</p>
                 </div>
                 <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border shrink-0 ${STATUS_CONFIG[selected.status]?.badge}`}>

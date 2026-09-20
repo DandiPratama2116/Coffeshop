@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Montserrat } from 'next/font/google';
+import { getApiBase } from '@/app/_utils/api';
 
 const montserrat = Montserrat({
   subsets: ['latin', 'cyrillic-ext'],
@@ -63,7 +64,7 @@ export default function WaitingView({
     
     setIsRefreshing(true);
     try {
-      const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+      const apiBase = getApiBase();
       let fetchedOrder: any = null;
 
       if (targetId && targetId > 0) {

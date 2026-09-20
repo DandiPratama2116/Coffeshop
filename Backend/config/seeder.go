@@ -234,6 +234,25 @@ func SeedDummyData(db *gorm.DB) error {
 			{310, "Outdoor", 10},
 			{311, "Outdoor", 4},
 			{312, "Outdoor", 12},
+
+			// 5. Lantai 2 (17 meja: VIP Meeting, Smoking Balcony, Co-Working Lounge, Rooftop Terrace)
+			{401, "VIP", 10},
+			{402, "Room Smoking", 4},
+			{403, "Room Smoking", 4},
+			{404, "Indoor", 8},
+			{405, "Indoor", 2},
+			{406, "Indoor", 2},
+			{407, "Indoor", 4},
+			{408, "Indoor", 5},
+			{409, "Outdoor", 4},
+			{410, "Outdoor", 6},
+			{411, "Outdoor", 6},
+			{412, "Outdoor", 6},
+			{413, "Outdoor", 4},
+			{414, "Outdoor", 4},
+			{415, "Outdoor", 4},
+			{416, "Outdoor", 4},
+			{417, "Outdoor", 6},
 		}
 
 		for _, dt := range desiredTables {

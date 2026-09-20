@@ -3,7 +3,7 @@ import AccordionGallery, { AccordionItem } from '../ui/AccordionGallery';
 export default function GallerySection() {
   const galleryItems: AccordionItem[] = [
     { image: '/assets/img1.jpeg', label: 'Suasana Nyaman'},
-    { image: '/assets/img2.jpeg', label: 'Dengan baragam' },
+    { image: '/assets/img2.jpeg', label: 'Ragam Menu' },
     { image: '/assets/img3.jpeg', label: 'Estetika Ruang' },
     { image: '/assets/img4.jpeg', label: 'Momen Bersama' },
     { image: '/assets/img5.jpeg', label: 'Kopi Pilihan' }
@@ -16,7 +16,7 @@ export default function GallerySection() {
     >
       <div className="max-w-container-max mx-auto">
         <h2 className="font-headline-lg text-3xl md:text-5xl lg:text-[60px] font-black text-primary text-center mb-10 md:mb-16 italic">
-          The Experience
+          Galeri &amp; Suasana
         </h2>
         <div className="w-full">
           <AccordionGallery

@@ -21,11 +21,11 @@ export default function Navigation() {
   }, []);
 
   const navLinks = [
-    { name: "Home", href: "#home" },
-    { name: "About", href: "#about" },
+    { name: "Beranda", href: "#home" },
+    { name: "Tentang", href: "#about" },
     { name: "Ruangan", href: "#facilities" },
     { name: "Menu", href: "#menu" },
-    { name: "Experience", href: "#gallery" },
+    { name: "Galeri", href: "#gallery" },
     { name: "Reservasi", href: "#Reservasi" },
   ];
 

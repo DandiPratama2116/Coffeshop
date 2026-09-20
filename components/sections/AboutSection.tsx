@@ -22,7 +22,11 @@ export default function AboutSection() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+        const apiBase =
+          process.env.NEXT_PUBLIC_API_URL ||
+          (typeof window !== "undefined"
+            ? `http://${window.location.hostname}:8080/api`
+            : "http://localhost:8080/api");
         let res = await fetch(`${apiBase}/customer/settings`);
         if (!res.ok) res = await fetch(`${apiBase}/admin/settings`);
         if (res.ok) {
@@ -32,20 +36,38 @@ export default function AboutSection() {
               openTime: (result.data.open_time || "09:00").replace(":", "."),
               closeTime: (result.data.close_time || "22:00").replace(":", "."),
               openDays: result.data.open_days || "Senin - Minggu",
-              operationalHours: result.data.operational_hours ? (typeof result.data.operational_hours === 'string' ? JSON.parse(result.data.operational_hours) : result.data.operational_hours) : [
-                { day: "Senin", open: "09:00", close: "22:00", isClosed: false },
-                { day: "Selasa", open: "09:00", close: "22:00", isClosed: false },
-                { day: "Rabu", open: "09:00", close: "22:00", isClosed: false },
-                { day: "Kamis", open: "09:00", close: "22:00", isClosed: false },
-                { day: "Jumat", open: "09:00", close: "22:00", isClosed: false },
-                { day: "Sabtu", open: "09:00", close: "22:00", isClosed: false },
-                { day: "Minggu", open: "09:00", close: "22:00", isClosed: false },
-              ]
+              operationalHours: result.data.operational_hours
+                ? typeof result.data.operational_hours === "string"
+                  ? JSON.parse(result.data.operational_hours)
+                  : result.data.operational_hours
+                : [
+                    { day: "Senin", open: "09:00", close: "22:00", isClosed: false },
+                    { day: "Selasa", open: "09:00", close: "22:00", isClosed: false },
+                    { day: "Rabu", open: "09:00", close: "22:00", isClosed: false },
+                    { day: "Kamis", open: "09:00", close: "22:00", isClosed: false },
+                    { day: "Jumat", open: "09:00", close: "22:00", isClosed: false },
+                    { day: "Sabtu", open: "09:00", close: "22:00", isClosed: false },
+                    { day: "Minggu", open: "09:00", close: "22:00", isClosed: false },
+                  ],
             });
           }
         }
       } catch (e) {
-        console.error("Gagal memuat pengaturan operasional", e);
+        if (typeof window !== "undefined") {
+          try {
+            const saved = localStorage.getItem("admin_settings");
+            if (saved) {
+              const p = JSON.parse(saved);
+              setSettings((prev) => ({
+                openTime: (p.openTime || "09:00").replace(":", "."),
+                closeTime: (p.closeTime || "22:00").replace(":", "."),
+                openDays: p.openDays || "Senin - Minggu",
+                operationalHours: p.operationalHours || prev.operationalHours,
+              }));
+            }
+          } catch (_) {}
+        }
+        console.warn("Gagal memuat pengaturan operasional dari server, menggunakan data default.");
       }
     };
     fetchSettings();

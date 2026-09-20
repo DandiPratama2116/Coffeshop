@@ -7,14 +7,17 @@ import { MENU_ITEMS, MENU_CATEGORIES } from "@/app/coffeshop-order/_data/menuDat
 interface Order {
   id: string;
   tableId: string;
-  items: { name: string; qty: number; price: number }[];
+  customerName?: string;
+  items: { name: string; qty: number; price: number; subtotal?: number }[];
+  subtotal: number;
+  discountAmount: number;
   total: number;
   status: "pending" | "processing" | "ready" | "done" | "completed";
   time: string;
 }
 
-const STATUS_CONFIG = {
-  pending: { label: "Pending", bg: "bg-amber-100", text: "text-amber-700", border: "border-amber-200", dot: "bg-amber-500" },
+const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; border: string; dot: string }> = {
+  pending: { label: "Menunggu", bg: "bg-amber-100", text: "text-amber-700", border: "border-amber-200", dot: "bg-amber-500" },
   processing: { label: "Diproses", bg: "bg-indigo-100", text: "text-indigo-700", border: "border-indigo-200", dot: "bg-indigo-500" },
   ready: { label: "Siap", bg: "bg-emerald-100", text: "text-emerald-700", border: "border-emerald-200", dot: "bg-emerald-500" },
   done: { label: "Selesai", bg: "bg-slate-100", text: "text-slate-600", border: "border-slate-200", dot: "bg-slate-400" },
@@ -77,20 +80,58 @@ export default function AdminDashboardPage() {
 
   const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
 
-  const fetchDashboardData = () => {
-    // 1. Fetch Orders
-    fetch(`${apiBase}/admin/orders`)
+  const fetchDashboardData = async () => {
+    // 1. Fetch Products for mapping fallback
+    let productMap: Record<string | number, string> = {};
+    try {
+      const prodRes = await fetch(`${apiBase}/admin/products`, { cache: "no-store" });
+      const prodResult = await prodRes.json();
+      if (prodResult.success && Array.isArray(prodResult.data)) {
+        prodResult.data.forEach((p: any) => {
+          if (p.id && p.nama_menu) {
+            productMap[p.id] = p.nama_menu;
+            productMap[String(p.id)] = p.nama_menu;
+          }
+        });
+      }
+    } catch {}
+
+    // 2. Fetch Orders
+    fetch(`${apiBase}/admin/orders`, { cache: "no-store" })
       .then(res => res.json())
       .then(result => {
         if (result.success && result.data) {
-          const mapped = result.data.map((o: any) => ({
-            id: String(o.id),
-            tableId: String(o.table_id),
-            items: o.items ? o.items.map((i: any) => ({ name: "Menu ID " + i.menu_id, qty: i.quantity, price: i.price })) : [],
-            total: o.total_amount,
-            status: o.status,
-            time: new Date(o.created_at).toLocaleTimeString()
-          }));
+          const mapped = result.data.map((o: any) => {
+            const discount = Number(o.discount_amount) || 0;
+            const items = o.items
+              ? o.items.map((i: any) => {
+                  const resolvedName =
+                    i.menu?.nama_menu ||
+                    productMap[i.menu_id] ||
+                    MENU_ITEMS.find((m) => m.id === String(i.menu_id) || m.id === `c${i.menu_id}`)?.name ||
+                    (i.name && !i.name.startsWith("Menu ID") ? i.name : `Menu #${i.menu_id}`);
+                  return {
+                    name: resolvedName,
+                    qty: i.quantity,
+                    price: i.price,
+                    subtotal: i.subtotal || (i.quantity * i.price),
+                  };
+                })
+              : [];
+            const rawSubtotal = items.reduce((acc: number, curr: any) => acc + (curr.price * curr.qty), 0);
+
+            return {
+              id: String(o.id),
+              tableId: String(o.table_id),
+              customerName: o.customer_name || (o.customer ? o.customer.name : `Pelanggan`),
+              items,
+              subtotal: rawSubtotal > 0 ? rawSubtotal : o.total_amount + discount,
+              discountAmount: discount,
+              total: o.total_amount,
+              status: o.status,
+              time: new Date(o.created_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }),
+            };
+          });
           setOrders(mapped);
         }
       })
@@ -197,7 +238,7 @@ export default function AdminDashboardPage() {
     const t = setTimeout(() => {
       fetchDashboardData();
     }, 100);
-    const interval = setInterval(fetchDashboardData, 10000);
+    const interval = setInterval(fetchDashboardData, 4000);
     return () => {
       clearTimeout(t);
       clearInterval(interval);
@@ -251,7 +292,7 @@ export default function AdminDashboardPage() {
   const topItemsSorted = Object.values(topItems).sort((a, b) => b.count - a.count).slice(0, 5);
   const maxCount = topItemsSorted[0]?.count || 1;
 
-  const recentOrders = [...orders].reverse().slice(0, 5);
+  const recentOrders = [...orders].sort((a, b) => Number(b.id) - Number(a.id)).slice(0, 5);
 
   return (
     <div className="space-y-8 pb-10">
@@ -492,27 +533,53 @@ export default function AdminDashboardPage() {
               </div>
             ) : (
               <div className="space-y-2">
-                {recentOrders.map((order) => (
-                  <div key={order.id} className="p-4 flex items-center justify-between bg-white border border-slate-100 rounded-2xl hover:border-indigo-100 hover:shadow-md hover:shadow-indigo-500/5 transition-all group">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-50 group-hover:border-indigo-100 transition-colors">
-                        <span className="text-slate-600 group-hover:text-indigo-600 text-sm font-bold">T{order.tableId}</span>
+                {recentOrders.map((order, idx) => (
+                  <Link
+                    key={order.id}
+                    href={`/admin/orders?orderId=${order.id}`}
+                    className="p-4 flex items-center justify-between bg-white border border-slate-100 rounded-2xl hover:border-indigo-200 hover:shadow-md hover:shadow-indigo-500/5 hover:bg-slate-50/50 transition-all group cursor-pointer block"
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center gap-4">
+                        <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0 group-hover:bg-indigo-50 group-hover:border-indigo-200 group-hover:text-indigo-600 transition-colors">
+                          <span className="text-slate-500 group-hover:text-indigo-600 text-sm font-bold">{idx + 1}</span>
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-slate-900 text-sm font-bold group-hover:text-indigo-600 transition-colors">
+                              {order.customerName || `Pesanan #${order.id}`}
+                            </p>
+                            <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200/80 px-2 py-0.5 rounded-md">
+                              Meja {order.tableId}
+                            </span>
+                            {order.discountAmount > 0 && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200">
+                                🏷️ -Rp {order.discountAmount.toLocaleString("id-ID")}
+                              </span>
+                            )}
+                            <span className="text-[10px] text-slate-400 font-medium">
+                              • {order.time}
+                            </span>
+                          </div>
+                          <p className="text-slate-500 text-xs mt-1 max-w-[200px] sm:max-w-[300px] truncate">
+                            {order.items.map(i => `${i.name} (${i.qty})`).join(", ") || "Tidak ada item"}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-slate-800 text-sm font-bold">#{order.id.padStart(5, '0')}</p>
-                        <p className="text-slate-500 text-xs mt-1 max-w-[200px] sm:max-w-[300px] truncate">
-                          {order.items.map(i => i.name).join(", ")}
-                        </p>
+                      <div className="flex flex-col items-end gap-1.5">
+                        <p className="text-slate-800 text-sm font-extrabold font-inter">Rp {order.total.toLocaleString("id-ID")}</p>
+                        {order.discountAmount > 0 && (
+                          <p className="text-[10px] line-through font-medium text-slate-400">
+                            Rp {order.subtotal.toLocaleString("id-ID")}
+                          </p>
+                        )}
+                        <span className={`flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-lg border font-bold uppercase tracking-wider ${STATUS_CONFIG[order.status]?.bg || "bg-slate-100"} ${STATUS_CONFIG[order.status]?.text || "text-slate-600"} ${STATUS_CONFIG[order.status]?.border || "border-slate-200"}`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${STATUS_CONFIG[order.status]?.dot || "bg-slate-400"}`}></span>
+                          {STATUS_CONFIG[order.status]?.label || order.status}
+                        </span>
                       </div>
                     </div>
-                    <div className="flex flex-col items-end gap-2">
-                      <p className="text-slate-800 text-sm font-extrabold font-inter">Rp {order.total.toLocaleString("id-ID")}</p>
-                      <span className={`flex items-center gap-1.5 text-[10px] px-2.5 py-1 rounded-lg border font-bold uppercase tracking-wider ${STATUS_CONFIG[order.status].bg} ${STATUS_CONFIG[order.status].text} ${STATUS_CONFIG[order.status].border}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${STATUS_CONFIG[order.status].dot}`}></span>
-                        {STATUS_CONFIG[order.status].label}
-                      </span>
-                    </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}

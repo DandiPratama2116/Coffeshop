@@ -7,22 +7,25 @@ import { MENU_ITEMS, MENU_CATEGORIES, MenuItem } from '../_data/menuData';
 import CartView from './CartView';
 import PaymentView from './PaymentView';
 import WaitingView from './WaitingView';
+import { getApiBase } from '@/app/_utils/api';
 
 interface OrderMenuProps {
   customerName: string;
+  customerId?: number;
   tableNumber: string;
   tableDatabaseId: number;
   seatingArea: string;
   onBack: () => void;
 }
 
-export default function OrderMenu({ customerName, tableNumber, tableDatabaseId, seatingArea, onBack }: OrderMenuProps) {
+export default function OrderMenu({ customerName, customerId, tableNumber, tableDatabaseId, seatingArea, onBack }: OrderMenuProps) {
   const [activeCategory, setActiveCategory] = useState('Coffee');
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [createdOrderId, setCreatedOrderId] = useState<number | null>(null);
+  const apiBase = getApiBase();
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'}/customer/products`)
+    fetch(`${apiBase}/customer/products`)
       .then(res => res.json())
       .then(result => {
         if(result.success && result.data) {
@@ -57,11 +60,32 @@ export default function OrderMenu({ customerName, tableNumber, tableDatabaseId, 
   const [currentView, setCurrentView] = useState<'menu' | 'cart' | 'payment' | 'waiting'>('menu');
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [promoCode, setPromoCode] = useState('');
+  const [promoId, setPromoId] = useState<number | undefined>(undefined);
   const [appliedPromo, setAppliedPromo] = useState(false);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [promos, setPromos] = useState<any[]>([]);
   const [activePromoIndex, setActivePromoIndex] = useState(0);
+  const [taxPercent, setTaxPercent] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch(`${apiBase}/customer/settings`)
+      .then(res => res.ok ? res.json() : null)
+      .then(result => {
+        if (result && result.success && result.data) {
+          setTaxPercent(Number(result.data.tax_percent) || 0);
+        }
+      })
+      .catch(() => {
+        const local = localStorage.getItem('admin_settings');
+        if (local) {
+          try {
+            const parsed = JSON.parse(local);
+            setTaxPercent(Number(parsed.taxPercent) || 0);
+          } catch (e) {}
+        }
+      });
+  }, [apiBase]);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -76,17 +100,16 @@ export default function OrderMenu({ customerName, tableNumber, tableDatabaseId, 
     if (savedOrderId && Number(savedOrderId) > 0) {
       setCreatedOrderId(Number(savedOrderId));
     }
-    if (savedView === 'cart' || savedView === 'payment' || savedView === 'waiting') {
-      setCurrentView(savedView);
+    if (savedView && ['cart', 'payment', 'waiting'].includes(savedView)) {
+      setCurrentView(savedView as any);
     }
   }, []);
 
-  // Save to localStorage whenever cart changes
+  // Sync cart & view to localStorage
   useEffect(() => {
     localStorage.setItem('order_cart', JSON.stringify(cart));
   }, [cart]);
 
-  // Save view state
   useEffect(() => {
     localStorage.setItem('order_currentView', currentView);
   }, [currentView]);
@@ -133,7 +156,6 @@ export default function OrderMenu({ customerName, tableNumber, tableDatabaseId, 
         }
       })
       .catch(() => {
-        // Fallback gracefully without throwing Next.js error overlay
         setPromos([]);
       });
   }, []);
@@ -181,6 +203,7 @@ export default function OrderMenu({ customerName, tableNumber, tableDatabaseId, 
   const handleUsePromo = (promo: any) => {
     const { linked, name, image, originalPrice, discountedPrice } = getPromoDetails(promo);
     const finalPrice = discountedPrice > 0 ? discountedPrice : (originalPrice > 0 ? originalPrice : 20000);
+    const discount = originalPrice > finalPrice ? originalPrice - finalPrice : (Number(promo.discount) || 0);
 
     const promoItem: MenuItem = {
       id: promo.product_id ? String(promo.product_id) : `promo-${promo.id}`,
@@ -193,10 +216,14 @@ export default function OrderMenu({ customerName, tableNumber, tableDatabaseId, 
     };
 
     addToCart(promoItem);
+    if (promo.id) {
+      setPromoId(Number(promo.id));
+    }
     if (promo.code) {
       setPromoCode(promo.code);
       setAppliedPromo(true);
     }
+    setDiscountAmount(discount);
     setCurrentView('cart');
   };
 
@@ -254,8 +281,10 @@ export default function OrderMenu({ customerName, tableNumber, tableDatabaseId, 
 
   const totalItems = cart.reduce((acc, curr) => acc + curr.quantity, 0);
   const totalPrice = cart.reduce((acc, curr) => acc + (curr.item.price * curr.quantity), 0);
-
-  // Get current time greeting
+  const deliveryFee = 2500;
+  const adminFee = 2000;
+  const taxAmount = Math.round((totalPrice * taxPercent) / 100);
+  const totalAmountWithTax = totalPrice + deliveryFee + adminFee + taxAmount;
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good Morning' : hour < 18 ? 'Good Afternoon' : 'Good Evening';
 
@@ -264,6 +293,7 @@ export default function OrderMenu({ customerName, tableNumber, tableDatabaseId, 
       <CartView
         cart={cart}
         setCart={setCart}
+        taxPercent={taxPercent}
         onBack={() => setCurrentView('menu')}
         onCheckout={() => setCurrentView('payment')}
       />
@@ -273,11 +303,15 @@ export default function OrderMenu({ customerName, tableNumber, tableDatabaseId, 
   if (currentView === 'payment') {
     return (
       <PaymentView
-        totalAmount={totalPrice + 2500 + 2000} 
+        totalAmount={totalAmountWithTax}
         customerName={customerName}
+        customerId={customerId || Number(localStorage.getItem('order_customerId')) || 0}
         tableId={tableDatabaseId}
         cart={cart}
         promoCode={promoCode}
+        promoId={promoId}
+        discountAmount={discountAmount}
+        taxPercent={taxPercent}
         onBack={() => setCurrentView('cart')}
         onPaySuccess={(orderId) => {
           setCart([]);

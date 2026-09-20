@@ -304,13 +304,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             >
               <span className="material-symbols-outlined text-2xl">menu</span>
             </button>
-
-            {pathname === "/admin/menu" && (
-              <div className="hidden md:flex items-center px-4 py-2 bg-slate-100 rounded-full border border-slate-200/60 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-400 transition-all w-64">
-                <span className="material-symbols-outlined text-slate-400 text-lg mr-2">search</span>
-                <input type="text" placeholder="Cari menu produk..." className="bg-transparent border-none outline-none text-sm w-full placeholder-slate-400 text-slate-700" />
-              </div>
-            )}
           </div>
 
           {/* Admin profile & Notifications */}
