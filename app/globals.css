@@ -100,6 +100,22 @@
     font-family: var(--font-montserrat), sans-serif;
     font-weight: 500;
   }
+
+  /* Cegah font & layout berantakan jika browser mengaktifkan Google Translate */
+  font,
+  font[vertical-align] {
+    font-family: inherit !important;
+    font-size: inherit !important;
+    line-height: inherit !important;
+    letter-spacing: inherit !important;
+    font-weight: inherit !important;
+    color: inherit !important;
+    vertical-align: baseline !important;
+  }
+
+  .skiptranslate {
+    display: none !important;
+  }
 }
 
 @layer utilities {

@@ -9,10 +9,10 @@ export default function MenuSection() {
       <div className="max-w-container-max mx-auto">
         <div className="text-center mb-16">
           <h2 className="font-headline-lg text-3xl sm:text-4xl md:text-5xl lg:text-[60px] font-black text-primary mb-4 italic">
-            Signature Creations
+            Kreasi Spesial
           </h2>
           <p className="font-body-lg font-normal text-on-surface-variant max-w-2xl mx-auto">
-            A curated selection of our most bold and striking beverages.
+            Pilihan sajian dan minuman istimewa terbaik yang diracik khusus untuk Anda.
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto">

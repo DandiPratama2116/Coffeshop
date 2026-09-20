@@ -135,7 +135,11 @@ export default function ReservationSection() {
   const [liveTables, setLiveTables] = useState<TableData[]>([]);
   const [modalSelectedTable, setModalSelectedTable] = useState<TableHotspot | null>(null);
 
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+  const apiBase =
+    process.env.NEXT_PUBLIC_API_URL ||
+    (typeof window !== "undefined"
+      ? `http://${window.location.hostname}:8080/api`
+      : "http://localhost:8080/api");
 
   const fetchLiveTables = () => {
     fetch(`${apiBase}/customer/tables`)
@@ -145,7 +149,9 @@ export default function ReservationSection() {
           setLiveTables(data.data);
         }
       })
-      .catch(console.error);
+      .catch((err) => {
+        console.warn("Gagal memuat meja realtime:", err);
+      });
   };
 
   useEffect(() => {

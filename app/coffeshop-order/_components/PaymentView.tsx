@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { MenuItem } from '../_data/menuData';
+import { getApiBase } from '@/app/_utils/api';
 
 interface CartItem {
   item: MenuItem;
@@ -26,6 +27,7 @@ interface PaymentViewProps {
 export default function PaymentView({ totalAmount, customerName, customerId, tableId, cart, promoCode, promoId, discountAmount, taxPercent = 0, onBack, onPaySuccess }: PaymentViewProps) {
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const apiBase = getApiBase();
 
   const groupedMethods = [
     {
@@ -58,7 +60,7 @@ export default function PaymentView({ totalAmount, customerName, customerId, tab
       const promoCartItem = cart.find(c => c.item.category === 'Promo');
       const calculatedDiscount = discountAmount || (promoCartItem && promoCartItem.item.originalPrice && promoCartItem.item.originalPrice > promoCartItem.item.price ? (promoCartItem.item.originalPrice - promoCartItem.item.price) * promoCartItem.quantity : 0);
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'}/customer/orders`, {
+      const response = await fetch(`${apiBase}/customer/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -84,7 +86,7 @@ export default function PaymentView({ totalAmount, customerName, customerId, tab
 
       // Create Payment Record
       try {
-        const paymentResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'}/customer/payments`, {
+        const paymentResponse = await fetch(`${apiBase}/customer/payments`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

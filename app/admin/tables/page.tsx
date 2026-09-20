@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import QRCode from "qrcode";
+import { getApiBase } from "@/app/_utils/api";
 
 interface Table {
   id: string;
@@ -14,15 +15,14 @@ interface Table {
   qrUrl: string;
 }
 
-// Konfigurasi presisi batas fisik meja pada denah asli: public/assets/denahlokasicoffeshop.jpeg
 interface TableHotspot {
   number: number;
-  code: string; // e.g. "VIP 1", "S1", "I1", "O1"
+  code: string;
   area: "VIP" | "Indoor" | "Room Smoking" | "Outdoor";
-  x: number; // Center X (%)
-  y: number; // Center Y (%)
-  w: number; // Width (%)
-  h: number; // Height (%)
+  x: number;
+  y: number;
+  w: number;
+  h: number;
   capacity: number;
   shape: "circle" | "rect";
   description: string;
@@ -126,15 +126,22 @@ export default function AdminTablesPage() {
   const [qrDataUrl, setQrDataUrl] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ number: 0, capacity: 4, locationId: 1, seatingArea: "Indoor" });
+  const [customBaseUrl, setCustomBaseUrl] = useState<string>("");
   const barcodeCardRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
+  const apiBase = getApiBase();
+
+  const getEffectiveBaseUrl = () => {
+    if (customBaseUrl.trim()) return customBaseUrl.trim().replace(/\/$/, "");
+    if (typeof window !== "undefined") return window.location.origin;
+    return "http://localhost:3000";
+  };
 
   const fetchTables = () => {
     fetch(`${apiBase}/admin/tables`)
       .then((response) => (response.ok ? response.json() : Promise.reject(new Error("Gagal memuat meja"))))
       .then((result) => {
-        const base = window.location.origin;
+        const base = getEffectiveBaseUrl();
         const loadedTables: Table[] = (result.data || []).map((table: any) => ({
           id: String(table.id),
           number: table.table_number,
@@ -163,11 +170,18 @@ export default function AdminTablesPage() {
     fetchTables();
     const interval = setInterval(fetchTables, 6000);
     return () => clearInterval(interval);
-  }, [apiBase]);
+  }, [apiBase, customBaseUrl]);
+
+  const [copiedLink, setCopiedLink] = useState(false);
 
   const showQR = async (table: Table) => {
-    setSelectedTable(table);
-    const url = await QRCode.toDataURL(table.qrUrl, {
+    const base = getEffectiveBaseUrl();
+    const updatedTable = {
+      ...table,
+      qrUrl: `${base}/coffeshop-order/${table.number}`,
+    };
+    setSelectedTable(updatedTable);
+    const url = await QRCode.toDataURL(updatedTable.qrUrl, {
       width: 320,
       margin: 2,
       color: { dark: "#0f172a", light: "#ffffff" },
@@ -175,11 +189,109 @@ export default function AdminTablesPage() {
     setQrDataUrl(url);
   };
 
+  const copyQRLink = (url: string) => {
+    if (navigator?.clipboard) {
+      navigator.clipboard.writeText(url);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+    }
+  };
+
   const downloadQR = () => {
     if (!qrDataUrl || !selectedTable) return;
     const a = document.createElement("a");
     a.href = qrDataUrl;
     a.download = `QR-Meja-${selectedTable.number}-${selectedTable.seatingArea}.png`;
+    a.click();
+  };
+
+  const downloadStandCard = async () => {
+    if (!selectedTable || !canvasRef.current || !qrDataUrl) return;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    canvas.width = 600;
+    canvas.height = 840;
+
+    // Background
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, 600, 840);
+
+    // Top Header Banner
+    const gradient = ctx.createLinearGradient(0, 0, 600, 180);
+    gradient.addColorStop(0, "#0f172a");
+    gradient.addColorStop(1, "#1e1b4b");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 600, 180);
+
+    // Header Text
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 28px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("COFFEE SHOP NORMA", 300, 75);
+
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = "14px sans-serif";
+    ctx.fillText("SISTEM PEMESANAN MANDIRI", 300, 105);
+
+    // Golden accent bar
+    ctx.fillStyle = "#f59e0b";
+    ctx.fillRect(200, 125, 200, 4);
+
+    // Table Number Section
+    ctx.fillStyle = "#0f172a";
+    ctx.font = "900 52px sans-serif";
+    ctx.fillText(`MEJA #${selectedTable.number}`, 300, 260);
+
+    ctx.fillStyle = "#64748b";
+    ctx.font = "bold 16px sans-serif";
+    ctx.fillText(`Area: ${selectedTable.seatingArea} (${selectedTable.capacity} Kursi)`, 300, 295);
+
+    // QR Box
+    ctx.fillStyle = "#f8fafc";
+    ctx.strokeStyle = "#e2e8f0";
+    ctx.lineWidth = 2;
+    if (ctx.roundRect) {
+      ctx.beginPath();
+      ctx.roundRect(140, 330, 320, 320, 24);
+      ctx.fill();
+      ctx.stroke();
+    } else {
+      ctx.fillRect(140, 330, 320, 320);
+      ctx.strokeRect(140, 330, 320, 320);
+    }
+
+    // Draw QR Code Image
+    const qrImage = new Image();
+    qrImage.crossOrigin = "anonymous";
+    qrImage.src = qrDataUrl;
+    await new Promise((resolve) => {
+      qrImage.onload = resolve;
+    });
+    ctx.drawImage(qrImage, 160, 350, 280, 280);
+
+    // Scan Instruction
+    ctx.fillStyle = "#0f172a";
+    ctx.font = "bold 20px sans-serif";
+    ctx.fillText("SCAN BARCODE UNTUK MEMESAN", 300, 695);
+
+    ctx.fillStyle = "#64748b";
+    ctx.font = "14px sans-serif";
+    ctx.fillText("Arahkan kamera smartphone Anda ke kode QR di atas", 300, 725);
+    ctx.fillText("untuk membuka menu & memesan langsung dari meja", 300, 748);
+
+    // Footer
+    ctx.fillStyle = "#e2e8f0";
+    ctx.fillRect(50, 780, 500, 1);
+
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = "12px sans-serif";
+    ctx.fillText("Selamat Menikmati Hidangan Anda", 300, 810);
+
+    const a = document.createElement("a");
+    a.href = canvas.toDataURL("image/png");
+    a.download = `Stand-Meja-${selectedTable.number}-${selectedTable.seatingArea}.png`;
     a.click();
   };
 
@@ -703,9 +815,43 @@ export default function AdminTablesPage() {
                       </p>
                     </div>
 
-                    <div className="bg-slate-50 p-3 rounded-2xl border border-slate-100">
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">URL Pemesanan Meja</p>
-                      <p className="text-slate-600 text-xs font-mono break-all">{selectedTable.qrUrl}</p>
+                    <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">URL Pemesanan Meja</p>
+                        <span className="text-[10px] text-indigo-600 font-medium">Scan via HP</span>
+                      </div>
+                      <p className="text-slate-700 text-xs font-mono break-all font-semibold bg-white p-2 rounded-xl border border-slate-200/70">
+                        {selectedTable.qrUrl}
+                      </p>
+
+                      {/* Custom Domain/IP Input for Local Testing & Production */}
+                      <div className="pt-1 border-t border-slate-200/60">
+                        <label className="text-[10px] text-slate-500 font-medium block mb-1">
+                          🌐 Host / IP Server Barcode:
+                        </label>
+                        <div className="flex gap-1.5">
+                          <input
+                            type="text"
+                            value={customBaseUrl}
+                            onChange={(e) => setCustomBaseUrl(e.target.value)}
+                            placeholder="cth: http://192.168.1.2:3000"
+                            className="w-full text-[11px] bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-700 outline-none focus:border-indigo-500 font-mono"
+                          />
+                          {customBaseUrl && (
+                            <button
+                              type="button"
+                              onClick={() => setCustomBaseUrl("")}
+                              className="px-2 py-1 text-[10px] bg-slate-200 hover:bg-slate-300 text-slate-600 rounded-lg font-bold cursor-pointer"
+                              title="Reset ke Origin"
+                            >
+                              Reset
+                            </button>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-slate-400 mt-1 leading-tight">
+                          💡 Agar HP bisa akses saat testing, gunakan IP Wi-Fi laptop (contoh: <code>http://192.168.1.2:3000</code>).
+                        </p>
+                      </div>
                     </div>
                   </div>
 
@@ -738,27 +884,45 @@ export default function AdminTablesPage() {
                   {/* Kolom 3: Tombol Aksi Cepat (4 Kolom) */}
                   <div className="md:col-span-4 space-y-2.5">
                     <button
-                      onClick={downloadQR}
-                      className="w-full bg-[#3B4CB8] hover:bg-[#3241A3] text-white font-bold py-3.5 rounded-xl text-xs transition-all flex items-center justify-center gap-2 shadow-md shadow-indigo-100"
+                      onClick={downloadStandCard}
+                      className="w-full bg-[#3B4CB8] hover:bg-[#3241A3] text-white font-bold py-3 rounded-xl text-xs transition-all flex items-center justify-center gap-2 shadow-md shadow-indigo-100 cursor-pointer"
                     >
-                      <span className="material-symbols-outlined text-base">download</span>
-                      Download Barcode QR (PNG)
+                      <span className="material-symbols-outlined text-base">style</span>
+                      Download Kartu Stand Meja (PNG)
+                    </button>
+
+                    <button
+                      onClick={downloadQR}
+                      className="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-2.5 rounded-xl text-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-base">qr_code</span>
+                      Download Barcode QR Saja (PNG)
+                    </button>
+
+                    <button
+                      onClick={() => copyQRLink(selectedTable.qrUrl)}
+                      className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 rounded-xl text-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <span className="material-symbols-outlined text-base">
+                        {copiedLink ? "check_circle" : "content_copy"}
+                      </span>
+                      {copiedLink ? "Link Tersalin ke Clipboard!" : "Salin Link QR Meja"}
                     </button>
 
                     <a
                       href={selectedTable.qrUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold py-3 rounded-xl text-xs transition-all flex items-center justify-center gap-2"
+                      className="w-full border border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold py-2.5 rounded-xl text-xs transition-all flex items-center justify-center gap-2"
                     >
                       <span className="material-symbols-outlined text-base">open_in_new</span>
-                      Buka Menu Pemesanan Pelanggan
+                      Buka Halaman Pemesanan (Test)
                     </a>
 
                     {selectedTable.id && !selectedTable.id.startsWith("virtual") && (
                       <button
                         onClick={() => deleteTable(selectedTable.id)}
-                        className="w-full text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-100 font-semibold py-2 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 mt-1"
+                        className="w-full text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-100 font-semibold py-2 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 mt-1 cursor-pointer"
                       >
                         <span className="material-symbols-outlined text-base">delete</span>
                         Hapus Meja Ini

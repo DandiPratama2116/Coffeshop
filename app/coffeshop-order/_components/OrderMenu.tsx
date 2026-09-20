@@ -7,6 +7,7 @@ import { MENU_ITEMS, MENU_CATEGORIES, MenuItem } from '../_data/menuData';
 import CartView from './CartView';
 import PaymentView from './PaymentView';
 import WaitingView from './WaitingView';
+import { getApiBase } from '@/app/_utils/api';
 
 interface OrderMenuProps {
   customerName: string;
@@ -21,9 +22,10 @@ export default function OrderMenu({ customerName, customerId, tableNumber, table
   const [activeCategory, setActiveCategory] = useState('Coffee');
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [createdOrderId, setCreatedOrderId] = useState<number | null>(null);
+  const apiBase = getApiBase();
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'}/customer/products`)
+    fetch(`${apiBase}/customer/products`)
       .then(res => res.json())
       .then(result => {
         if(result.success && result.data) {
@@ -67,7 +69,7 @@ export default function OrderMenu({ customerName, customerId, tableNumber, table
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api'}/customer/settings`)
+    fetch(`${apiBase}/customer/settings`)
       .then(res => res.ok ? res.json() : null)
       .then(result => {
         if (result && result.success && result.data) {
@@ -83,7 +85,7 @@ export default function OrderMenu({ customerName, customerId, tableNumber, table
           } catch (e) {}
         }
       });
-  }, []);
+  }, [apiBase]);
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -98,17 +100,16 @@ export default function OrderMenu({ customerName, customerId, tableNumber, table
     if (savedOrderId && Number(savedOrderId) > 0) {
       setCreatedOrderId(Number(savedOrderId));
     }
-    if (savedView === 'cart' || savedView === 'payment' || savedView === 'waiting') {
-      setCurrentView(savedView);
+    if (savedView && ['cart', 'payment', 'waiting'].includes(savedView)) {
+      setCurrentView(savedView as any);
     }
   }, []);
 
-  // Save to localStorage whenever cart changes
+  // Sync cart & view to localStorage
   useEffect(() => {
     localStorage.setItem('order_cart', JSON.stringify(cart));
   }, [cart]);
 
-  // Save view state
   useEffect(() => {
     localStorage.setItem('order_currentView', currentView);
   }, [currentView]);
@@ -155,7 +156,6 @@ export default function OrderMenu({ customerName, customerId, tableNumber, table
         }
       })
       .catch(() => {
-        // Fallback gracefully without throwing Next.js error overlay
         setPromos([]);
       });
   }, []);
@@ -285,8 +285,6 @@ export default function OrderMenu({ customerName, customerId, tableNumber, table
   const adminFee = 2000;
   const taxAmount = Math.round((totalPrice * taxPercent) / 100);
   const totalAmountWithTax = totalPrice + deliveryFee + adminFee + taxAmount;
-
-  // Get current time greeting
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good Morning' : hour < 18 ? 'Good Afternoon' : 'Good Evening';
 
