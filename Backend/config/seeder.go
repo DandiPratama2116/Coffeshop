@@ -1,6 +1,8 @@
 package config
 
 import (
+	"log"
+
 	"backend/internal"
 
 	"gorm.io/gorm"
@@ -189,7 +191,17 @@ func SeedDummyData(db *gorm.DB) error {
 
 	// ── Location & Tables (Denah 4 Area: VIP, Indoor, Smoking, Outdoor) ──
 	var loc internal.Location
-	if err := db.First(&loc).Error; err == nil && loc.ID > 0 {
+	if err := db.First(&loc).Error; err != nil || loc.ID == 0 {
+		loc = internal.Location{
+			NamaTempat: "Caffe Norma",
+			Keterangan: "Area Utama Caffe Norma",
+		}
+		if err := db.Create(&loc).Error; err != nil {
+			log.Printf("failed to create default location: %v", err)
+		}
+	}
+
+	if loc.ID > 0 {
 		desiredTables := []struct {
 			num      uint
 			area     string

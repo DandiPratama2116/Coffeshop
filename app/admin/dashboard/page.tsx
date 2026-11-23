@@ -302,11 +302,6 @@ export default function AdminDashboardPage() {
           <h2 className="text-2xl font-extrabold text-slate-800 tracking-tight">Ringkasan Hari Ini</h2>
           <p className="text-sm text-slate-500 mt-1 font-medium">Pantau aktivitas restoran, jam operasional, dan tempat duduk secara real-time.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-full text-xs font-bold border border-emerald-100">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Live Sync
-          </span>
-        </div>
       </div>
 
       {/* 1. OPERATIONAL HOURS & STORE STATUS BANNER (TERHUBUNG KE SETTINGS) */}

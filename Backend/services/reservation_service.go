@@ -47,13 +47,46 @@ func (s ReservationService) Create(request dto.CreateReservationRequest) (intern
 		if tblNum, err := strconv.Atoi(matches[1]); err == nil && tblNum > 0 {
 			if s.db.Where("table_number = ?", tblNum).First(&table).Error == nil {
 				foundTable = true
+			} else {
+				// Buat meja jika belum ada sesuai nomor meja yang dipilih
+				var loc internal.Location
+				if s.db.First(&loc).Error == nil && loc.ID > 0 {
+					table = internal.Table{
+						TableNumber: uint(tblNum),
+						LocationID:  loc.ID,
+						SeatingArea: "Indoor",
+						Capacity:    4,
+						Status:      "available",
+					}
+					if s.db.Create(&table).Error == nil {
+						foundTable = true
+					}
+				}
 			}
 		}
 	}
 	if !foundTable {
 		if err := s.db.Where("status = ?", "available").First(&table).Error; err != nil {
 			if err := s.db.First(&table).Error; err != nil {
-				return internal.Reservation{}, errors.New("belum ada data meja di sistem")
+				// Buat lokasi & meja default jika database meja masih kosong
+				var defaultLoc internal.Location
+				if s.db.First(&defaultLoc).Error != nil {
+					defaultLoc = internal.Location{
+						NamaTempat: "Caffe Norma",
+						Keterangan: "Area Utama Caffe Norma",
+					}
+					_ = s.db.Create(&defaultLoc).Error
+				}
+				table = internal.Table{
+					TableNumber: 1,
+					LocationID:  defaultLoc.ID,
+					SeatingArea: "Indoor",
+					Capacity:    4,
+					Status:      "available",
+				}
+				if err := s.db.Create(&table).Error; err != nil {
+					return internal.Reservation{}, errors.New("belum ada data meja di sistem dan gagal membuat meja default")
+				}
 			}
 		}
 	}
